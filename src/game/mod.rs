@@ -5,7 +5,6 @@ use crate::{
 };
 
 mod cat;
-mod platform;
 mod clouds;
 mod bullet;
 
