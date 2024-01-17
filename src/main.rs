@@ -3,7 +3,7 @@ use bevy::prelude::*;
 mod game;
 use game::GamePlugin;
 
-pub const SCALE_FACTOR: f32 = 2.5;
+pub const SCALE_FACTOR: f32 = 4.0;
 
 fn main() {
     App::new()

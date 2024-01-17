@@ -39,11 +39,13 @@ fn spawn_cat(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
 ) { 
+    let cat_bundle = SpriteBundle {
+        texture: asset_server.load("sprites/cat/cat_idle.png"),
+        ..default()
+    };
+
     commands.spawn((
-        SpriteBundle {
-            texture: asset_server.load("sprites/cat/cat_idle.png"),
-            ..default()
-        },
+        cat_bundle,
         Cat {
             velocity: Vec3::ZERO,
             can_jump: false,
@@ -88,6 +90,9 @@ fn confine_cat(
 ) {
     let Ok(window) = window_query.get_single() else { return };
     let Ok((mut transform, mut cat)) = transform_query.get_single_mut() else { return };
+
+    // println!("{:?}", (window.height(), window.width()));
+    // window default: 1280, 720
 
     let (y_min, y_max) = get_min_max(window.height());
     let (x_min, x_max) = get_min_max(window.width());
