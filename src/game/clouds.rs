@@ -2,11 +2,10 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use rand::{random, Rng};
 use super::{
     GameState,
-    SimulationState,
     SCALE_FACTOR,
 };
 
-const CLOUD_SIZE: f32 = 16.0 * SCALE_FACTOR;
+const CLOUD_SIZE: f32 = 16.0;
 const CLOUD_SPAWN_RATE: f32 = 0.69;
 const CLOUD_SPEED: f32 = 15.0;
 
@@ -60,7 +59,7 @@ fn spawn_cloud(
     };
 
     cloud_sprite.transform.translation.y += (window.height()/2.0)/SCALE_FACTOR * random::<f32>();
-    cloud_sprite.transform.translation.x += (window.width()/2.0)/SCALE_FACTOR + (CLOUD_SIZE/SCALE_FACTOR)/2.0;
+    cloud_sprite.transform.translation.x += (window.width()/2.0)/SCALE_FACTOR + CLOUD_SIZE/2.0;
 
     commands.spawn((
         cloud_sprite,

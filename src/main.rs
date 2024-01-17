@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, app::AppExit};
 
 mod game;
 use game::GamePlugin;
@@ -12,13 +12,13 @@ fn main() {
             GamePlugin
         ))
         .add_state::<GameState>()
-        .add_systems(Startup, (
-            spawn_camera,
-        ))
+        .add_systems(Startup, spawn_camera)
+        .add_systems(Update, exit_handler)
         .run()
     ;
 }
 
+#[allow(dead_code)]
 #[derive(States, Default, Clone, Copy, Debug, Hash, Eq, PartialEq)]
 enum GameState {
     MainMenu,
@@ -38,3 +38,11 @@ fn spawn_camera(
     );
 }
 
+fn exit_handler(
+    key_input: Res<Input<KeyCode>>,
+    mut exit_event_writer: EventWriter<AppExit>,
+) {
+    if key_input.pressed(KeyCode::Q) && key_input.pressed(KeyCode::Q) {
+        exit_event_writer.send(AppExit)
+    }
+}

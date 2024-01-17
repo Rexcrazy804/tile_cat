@@ -1,4 +1,4 @@
-use bevy::{prelude::*, window::PrimaryWindow};
+use bevy::{prelude::*, window::{PrimaryWindow, WindowResized}};
 use crate::{
     GameState,
     SCALE_FACTOR
@@ -7,12 +7,17 @@ use crate::{
 mod cat;
 mod platform;
 mod clouds;
+mod bullet;
 
 use cat::CatPlugin;
 use clouds::CloudPlugin;
+use bullet::BulletPlugin;
 
 const GRAVITY: f32 = 200.8;
 const FRICTION: f32 = 0.8;
+
+#[derive(Component)]
+struct Background;
 
 pub struct GamePlugin;
 impl Plugin for GamePlugin {
@@ -22,10 +27,15 @@ impl Plugin for GamePlugin {
             .add_plugins((
                 CatPlugin,
                 CloudPlugin,
+                BulletPlugin,
             ))
 
             .add_systems(OnEnter(GameState::Game), spawn_background)
-            .add_systems(Update, toggle_simulation.run_if(in_state(GameState::Game)))
+            .add_systems(Update, (
+                toggle_simulation,
+                resize_bacground,
+            )
+                .run_if(in_state(GameState::Game)))
         ;
     }
 }
@@ -35,6 +45,11 @@ enum SimulationState {
     #[default]
     Running,
     Paused
+}
+
+enum EntityDirection {
+    Left,
+    Right,
 }
 
 fn spawn_background(
@@ -58,10 +73,25 @@ fn spawn_background(
     };
     my_background.transform.translation.z = -0.1;
 
-    commands.spawn(
-        my_background
-    );
+    commands.spawn((
+        my_background,
+        Background,
+    ));
 }
+
+fn resize_bacground(
+    mut background_query: Query<&mut Sprite, With<Background>>,
+    mut window_reized_reader: EventReader<WindowResized>
+) {
+    let Ok(mut background_sprite) = background_query.get_single_mut() else { return };
+    for window_resized in window_reized_reader.read() {
+        background_sprite.custom_size = Some(Vec2::new(
+            (window_resized.width/SCALE_FACTOR).into(),
+            (window_resized.height/SCALE_FACTOR).into(),
+        ))
+    }
+}
+
 
 fn toggle_simulation(
     key_input: Res<Input<KeyCode>>,
