@@ -25,7 +25,7 @@ impl Plugin for CatPlugin {
             .add_systems(Update, (
                 (move_cat, jump_cat).before(confine_cat),
                 confine_cat,
-                face_cat,
+                animate_cat,
             )
                 .run_if(in_state(SimulationState::Running))
                 .run_if(in_state(GameState::Game))
@@ -38,9 +38,21 @@ impl Plugin for CatPlugin {
 fn spawn_cat(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) { 
-    let cat_bundle = SpriteBundle {
-        texture: asset_server.load("sprites/cat/cat_idle.png"),
+    let texture_handle = asset_server.load("sprites/cat/cat_sheet_1.png");
+    let atlas = TextureAtlas::from_grid(
+        texture_handle,
+        Vec2::new(16.0, 16.0),
+        // columns, rows, padding, offset
+        2, 1, None, None
+    );
+
+    let atlas_handle = texture_atlases.add(atlas);
+
+    let cat_bundle = SpriteSheetBundle{
+        texture_atlas: atlas_handle,
+        sprite: TextureAtlasSprite::new(1),
         ..default()
     };
 
@@ -129,15 +141,22 @@ fn jump_cat(
     }
 }
 
-fn face_cat(
-    mut transform_query: Query<(&mut Transform, &Cat)>,
+fn animate_cat(
+    mut transform_query: Query<(&mut Transform, &Cat, &mut TextureAtlasSprite)>,
 ) {
-    let Ok((mut transform, cat)) = transform_query.get_single_mut() else { return };
+    let Ok((mut transform, cat, mut sprite)) = transform_query.get_single_mut() else { return };
+
     if cat.velocity.x < 0.0 {
         transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
     }
     if cat.velocity.x > 0.0 {
         transform.rotation = Quat::default();
+    }
+
+    if cat.can_jump {
+        sprite.index = 0;
+    } else {
+        sprite.index = 1;
     }
 }
 

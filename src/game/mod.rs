@@ -25,7 +25,7 @@ impl Plugin for GamePlugin {
             ))
 
             .add_systems(OnEnter(GameState::Game), spawn_background)
-
+            .add_systems(Update, toggle_simulation.run_if(in_state(GameState::Game)))
         ;
     }
 }
@@ -61,4 +61,16 @@ fn spawn_background(
     commands.spawn(
         my_background
     );
+}
+
+fn toggle_simulation(
+    key_input: Res<Input<KeyCode>>,
+    current_state: Res<State<SimulationState>>,
+    mut next_state: ResMut<NextState<SimulationState>>
+) {
+    if !key_input.just_pressed(KeyCode::Escape) { return }
+    match *current_state.get() {
+        SimulationState::Running => next_state.set(SimulationState::Paused),
+        SimulationState::Paused => next_state.set(SimulationState::Running),
+    }
 }

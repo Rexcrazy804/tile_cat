@@ -35,7 +35,6 @@ impl Plugin for CloudPlugin {
                 despawn_outbound_cloud,
             )
                 .run_if(in_state(GameState::Game))
-                .run_if(in_state(SimulationState::Running))
             )
             .add_systems(OnExit(GameState::Game), despawn_clouds)
         ;
@@ -86,7 +85,7 @@ fn despawn_outbound_cloud (
     let Ok(window) = window_query.get_single() else { return };
 
     for (entity, transform) in &cloud_query {
-        if transform.translation.x < -(window.width()/2.0)/SCALE_FACTOR - CLOUD_SIZE {
+        if transform.translation.x < -(window.width()/2.0)/SCALE_FACTOR - (CLOUD_SIZE/SCALE_FACTOR)/2.0 {
             commands.entity(entity).despawn()
         }
     }
