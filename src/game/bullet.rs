@@ -21,15 +21,21 @@ struct Bullet {
 #[derive(Event)]
 pub struct BulletFireEvent(pub f32);
 
+#[derive(Event)]
+struct DestroyBulletEvent(Entity);
+
 pub struct BulletPlugin;
 impl Plugin for BulletPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_event::<BulletFireEvent>()
+            .add_event::<DestroyBulletEvent>()
             .add_systems(Update, (
                 spawn_bullet.run_if(on_event::<BulletFireEvent>()),
                 move_bullet,
-                despawn_bullet,
+                despawn_bullet
+                    .run_if(on_event::<DestroyBulletEvent>())
+                    .after(move_bullet)
             )
                 .run_if(in_state(GameState::Game))
                 .run_if(in_state(SimulationState::Running))
@@ -65,24 +71,28 @@ fn spawn_bullet(
 }
 
 fn move_bullet(
-    mut transform_query: Query<(&mut Transform, &Bullet)>,
+    mut transform_query: Query<(&mut Transform, &Bullet, Entity)>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
     time: Res<Time>,
+    mut destruction_writter: EventWriter<DestroyBulletEvent>,
 ) {
-    for (mut bullet_transform, bullet) in &mut transform_query {
+    let Ok(window) = window_query.get_single() else { return };
+
+    for (mut bullet_transform, bullet, entity) in &mut transform_query {
+        if bullet_transform.translation.x > ((window.width()/2.0)/SCALE_FACTOR) + BULLET_SIZE/2.0 {
+            destruction_writter.send(DestroyBulletEvent(entity));
+            continue
+        }
+
         bullet_transform.translation.x += bullet.direction_multiplier * BULLET_SPEED * time.delta_seconds();
     }
 }
 
 fn despawn_bullet(
     mut commands: Commands,
-    window_query: Query<&Window, With<PrimaryWindow>>,
-    entity_query: Query<(Entity, &Transform), With<Bullet>>,
+    mut destruction_reader: EventReader<DestroyBulletEvent>,
 ) {
-    let Ok(window) = window_query.get_single() else { return };
-
-    for (bullet, transform) in &entity_query {
-        if transform.translation.x > ((window.width()/2.0)/SCALE_FACTOR) + BULLET_SIZE/2.0 {
-            commands.entity(bullet).despawn()
-        }
+    for entity in destruction_reader.read() {
+        commands.entity(entity.0).despawn();
     }
 }
