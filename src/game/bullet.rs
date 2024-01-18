@@ -11,7 +11,7 @@ use super::{
 
 const BULLET_SIZE: f32 = 16.0;
 const BULLET_SPEED: f32 = 400.0;
-const BULLET_Y_OFFSET: f32 = 10.0 / SCALE_FACTOR;
+const BULLET_Y_OFFSET: f32 = 2.0;
 
 #[derive(Component)]
 struct Bullet {
@@ -27,7 +27,7 @@ impl Plugin for BulletPlugin {
         app
             .add_event::<BulletFireEvent>()
             .add_systems(Update, (
-                spawn_bullet,
+                spawn_bullet.run_if(on_event::<BulletFireEvent>()),
                 move_bullet,
                 despawn_bullet,
             )

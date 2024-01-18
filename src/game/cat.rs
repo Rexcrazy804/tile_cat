@@ -2,20 +2,23 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use super::{
     GameState,
     SimulationState,
+    EntityDirection,
 
     SCALE_FACTOR,
     GRAVITY,
     FRICTION,
 
-    EntityDirection,
     bullet::BulletFireEvent,
+    ground::{Ground, GROUND_SIZE},
 };
 
 pub const CAT_SIZE: f32 = 16.0;
 const CAT_SPEEED: f32 = 25.0;
 const CAT_JUMP_FORCE: f32 = 100.0;
-const CAT_GUN_WEIGHT: f32 = 20.0;
 const CAT_BULLET_ANIMATION_DURATION: f32 = 0.12;
+
+// subtracts from jump force when gun is equiped
+const CAT_GUN_WEIGHT: f32 = 20.0; 
 
 #[derive(Component)]
 pub struct Cat {
@@ -49,7 +52,8 @@ impl Plugin for CatPlugin {
                 Timer::from_seconds(CAT_BULLET_ANIMATION_DURATION, TimerMode::Once)
             ))
             .add_systems(Update, (
-                (move_cat, jump_cat).before(confine_cat),
+                move_cat.before(confine_cat),
+                jump_cat,
                 confine_cat,
                 animate_cat,
                 toggle_cat_gun,
@@ -124,12 +128,13 @@ fn move_cat(
 }
 
 fn confine_cat(
-    mut transform_query: Query<(&mut Transform, &mut Cat)>,
+    mut transform_query: Query<(&mut Transform, &mut Cat), Without<Ground>>,
+    ground_query: Query<&Transform, With<Ground>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
     time: Res<Time>
 ) {
     let Ok(window) = window_query.get_single() else { return };
-    let Ok((mut transform, mut cat)) = transform_query.get_single_mut() else { return };
+    let Ok((mut cat_transform, mut cat)) = transform_query.get_single_mut() else { return };
 
     // println!("{:?}", (window.height(), window.width()));
     // window default: 1280, 720
@@ -137,29 +142,40 @@ fn confine_cat(
     let (y_min, y_max) = get_min_max(window.height());
     let (x_min, x_max) = get_min_max(window.width());
 
+    cat_transform.translation += cat.velocity * time.delta_seconds();
 
-    transform.translation += cat.velocity * time.delta_seconds();
-
-    if transform.translation.y < y_min {
-        transform.translation.y = y_min;
+    if cat_transform.translation.y < y_min {
+        cat_transform.translation.y = y_min;
         cat.velocity.y = 0.0;
         cat.can_jump = true;
     }
-    if transform.translation.y > y_max {
-        transform.translation.y = y_max
+    if cat_transform.translation.y > y_max {
+        cat_transform.translation.y = y_max
     }
 
-    if transform.translation.x < x_min {
-        transform.translation.x = x_min
+    if cat_transform.translation.x < x_min {
+        cat_transform.translation.x = x_min
     }
-    if transform.translation.x > x_max {
-        transform.translation.x = x_max
+    if cat_transform.translation.x > x_max {
+        cat_transform.translation.x = x_max
+    }
+
+    for ground_transfrom in &ground_query {
+        if cat_transform.translation.distance(ground_transfrom.translation) > 2.5 * GROUND_SIZE { continue }
+
+        let ground_limit = ground_transfrom.translation.y + GROUND_SIZE;
+
+        if cat_transform.translation.y < ground_limit {
+            cat_transform.translation.y = ground_limit;
+            cat.velocity.y = 0.0;
+            cat.can_jump = true;
+        }
     }
 }
 
-fn get_min_max(limit: f32) -> (f32, f32) {
-    let min = CAT_SIZE/2.0 - ((limit/2.0) / SCALE_FACTOR);
-    let max = ((limit/2.0)/ SCALE_FACTOR) - CAT_SIZE/2.0;
+fn get_min_max(window_limit: f32) -> (f32, f32) {
+    let min = CAT_SIZE/2.0 - ((window_limit/2.0) / SCALE_FACTOR);
+    let max = ((window_limit/2.0)/ SCALE_FACTOR) - CAT_SIZE/2.0;
     (min, max)
 }
 
@@ -183,11 +199,12 @@ fn animate_cat(
 ) {
     let Ok((mut transform, cat, mut sprite)) = transform_query.get_single_mut() else { return };
 
-    if cat.velocity.x < 0.0 {
-        transform.rotation = Quat::from_rotation_y(std::f32::consts::PI);
-    }
-    if cat.velocity.x > 0.0 {
-        transform.rotation = Quat::default();
+    match cat.direction {
+        EntityDirection::Left => 
+            transform.rotation = Quat::from_rotation_y(std::f32::consts::PI),
+
+        EntityDirection::Right => 
+            transform.rotation = Quat::default(),
     }
 
     if cat.can_jump {
@@ -207,7 +224,7 @@ fn toggle_cat_gun(
     mut cat_query: Query<&mut Cat>,
     key_input: Res<Input<KeyCode>>,
 ) {
-    if !key_input.just_pressed(KeyCode::G) { return }
+    if !key_input.just_pressed(KeyCode::F) { return }
     let Ok(mut cat) = cat_query.get_single_mut() else { return };
 
     cat.has_gun = !cat.has_gun

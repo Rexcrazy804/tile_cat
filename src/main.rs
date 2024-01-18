@@ -42,7 +42,7 @@ fn exit_handler(
     key_input: Res<Input<KeyCode>>,
     mut exit_event_writer: EventWriter<AppExit>,
 ) {
-    if key_input.pressed(KeyCode::Q) && key_input.pressed(KeyCode::Q) {
+    if key_input.pressed(KeyCode::ShiftLeft) && key_input.pressed(KeyCode::Q) {
         exit_event_writer.send(AppExit)
     }
 }

@@ -8,6 +8,7 @@ use super::{
 const CLOUD_SIZE: f32 = 16.0;
 const CLOUD_SPAWN_RATE: f32 = 0.69;
 const CLOUD_SPEED: f32 = 15.0;
+const INITIAL_CLOUDS: usize = 30;
 
 #[derive(Component)]
 struct Cloud {
@@ -28,9 +29,11 @@ impl Plugin for CloudPlugin {
     fn build(&self, app: &mut App) {
         app
             .insert_resource(CloudTimer::new())
+
+            .add_systems(OnEnter(GameState::Game), spawn_initial_clouds)
             .add_systems(Update, (
                 move_clouds,
-                spawn_cloud,
+                spawn_new_clouds,
                 despawn_outbound_cloud,
             )
                 .run_if(in_state(GameState::Game))
@@ -39,8 +42,35 @@ impl Plugin for CloudPlugin {
         ;
     }
 }
+fn spawn_initial_clouds(
+    mut commands: Commands,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+    asset_server: Res<AssetServer>,
+) {
 
-fn spawn_cloud(
+    let mut random_number = rand::thread_rng();
+    let Ok(window) = window_query.get_single() else { return };
+
+    for _ in 0..INITIAL_CLOUDS {
+        let random_texture = format!("sprites/clouds/cloud_{}.png", random_number.gen_range(1..=3));
+        let mut cloud_sprite = SpriteBundle {
+            texture: asset_server.load(random_texture),
+            ..default()
+        };
+
+        cloud_sprite.transform.translation.y += (window.height()/2.0)/SCALE_FACTOR * random::<f32>();
+        cloud_sprite.transform.translation.x = ((window.width()/2.0)/SCALE_FACTOR * random::<f32>()) *
+            if random::<bool>() { 1.0 } else { -1.0 };
+
+        commands.spawn((
+            cloud_sprite,
+            Cloud { speed: (0.5 + random::<f32>()%0.5) * CLOUD_SPEED }
+        ));
+    }
+
+}
+
+fn spawn_new_clouds(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
     asset_server: Res<AssetServer>,
