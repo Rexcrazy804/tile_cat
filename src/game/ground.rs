@@ -9,9 +9,13 @@ use super::{
 pub const GROUND_WIDTH: f32 = 16.0;
 pub const GROUND_HEIGHT: f32 = GROUND_WIDTH/2.0;
 const GROUND_SPACING: f32 = 1.0;
+const MAX_TEMP_GROUND: usize = 4;
 
 #[derive(Component)]
 pub struct Ground;
+
+#[derive(Component)]
+pub struct TempGround;
 
 #[derive(Event)]
 pub struct GroundBuildEvent(pub Vec3);
@@ -28,8 +32,10 @@ impl Plugin for GroundPlugin {
                 .run_if(in_state(GameState::Game))
                 .run_if(on_event::<WindowResized>())
             )
-            .add_systems(Update, 
-                build_ground_underneath_cat
+            .add_systems(Update, (
+                build_ground_underneath_cat,
+                despawn_temp_ground.after(build_ground_underneath_cat),
+            )
                     .run_if(on_event::<GroundBuildEvent>())
             )
         ;
@@ -103,6 +109,30 @@ fn build_ground_underneath_cat(
         commands.spawn((
             ground_sprite,
             Ground,
+            TempGround,
         ));
+    }
+}
+
+fn despawn_temp_ground(
+    mut commands: Commands,
+    query: Query<Entity, With<TempGround>>,
+) {
+    let mut vec: Vec<Entity> = Vec::new();
+
+    for entity in &query {
+        vec.push(entity);
+    }
+    if vec.len() <= MAX_TEMP_GROUND { return }
+
+    vec.sort();
+    let removable = vec.len() - MAX_TEMP_GROUND;
+    let mut i = 0;
+
+    for entity in vec {
+        if i < removable {
+            commands.entity(entity).despawn();
+            i += 1;
+        }
     }
 }
