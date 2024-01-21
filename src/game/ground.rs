@@ -34,7 +34,7 @@ impl Plugin for GroundPlugin {
             )
             .add_systems(Update, (
                 build_ground_underneath_cat,
-                despawn_temp_ground.after(build_ground_underneath_cat),
+                despawn_temp_ground,
             )
                     .run_if(on_event::<GroundBuildEvent>())
             )
@@ -92,14 +92,8 @@ fn build_ground_underneath_cat(
     for event in ground_build_reader.read() {
         let cat_transform = event.0;
 
-        let random_sprite = || {
-            format!( "sprites/ground/ground_{}.png",
-                if random::<bool>() { 1 } else { 2 }
-            )
-        };
-
         let mut ground_sprite = SpriteBundle {
-            texture: asset_server.load(random_sprite()),
+            texture: asset_server.load("sprites/ground/temp_ground_new.png"),
             ..default()
         };
 
