@@ -253,7 +253,7 @@ fn fire_bullet_cat(
         cat.is_firing = false;
     }
 
-    if key_input.pressed(KeyCode::Space) && anim_time.0.finished() {
+    if key_input.just_pressed(KeyCode::Space) && anim_time.0.finished() {
         let direction_multiplier = match cat.direction {
             EntityDirection::Right => 1.0,
             EntityDirection::Left => -1.0,
