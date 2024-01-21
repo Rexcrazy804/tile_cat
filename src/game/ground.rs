@@ -50,8 +50,11 @@ fn spawn_new_ground(
     asset_server: Res<AssetServer>
 ) {
     for window in window_resized_reader.read() {
-        let ground_count = ((window.width/SCALE_FACTOR)/GROUND_WIDTH).floor();
-        let initial_x_pos = -((window.width/2.0)/SCALE_FACTOR) + GROUND_WIDTH/2.0;
+        let raw_ground_count = (window.width/SCALE_FACTOR)/GROUND_WIDTH;
+        let ground_count = raw_ground_count.floor();
+        let space = raw_ground_count - ground_count;
+
+        let initial_x_pos = -((window.width/2.0)/SCALE_FACTOR) + GROUND_WIDTH/2.0 + (space*SCALE_FACTOR)*2.0;
         let y_pos = -(window.height/2.0)/SCALE_FACTOR;
 
         let random_sprite = || {
