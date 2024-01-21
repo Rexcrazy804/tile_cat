@@ -8,11 +8,13 @@ mod cat;
 mod clouds;
 mod bullet;
 mod ground;
+mod flora;
 
 use cat::CatPlugin;
 use clouds::CloudPlugin;
 use bullet::BulletPlugin;
 use ground::GroundPlugin;
+use flora::FloraPlugin;
 
 const GRAVITY: f32 = 200.8;
 const FRICTION: f32 = 0.8;
@@ -30,6 +32,7 @@ impl Plugin for GamePlugin {
                 CloudPlugin,
                 BulletPlugin,
                 GroundPlugin,
+                FloraPlugin,
             ))
 
             .add_systems(OnEnter(GameState::Game), spawn_background)

@@ -4,6 +4,7 @@ use rand::random;
 use super::{
     GameState,
     SCALE_FACTOR, cat::CAT_SIZE,
+    flora::{FloraSpawnEvent, FLORA_SPAWN_RATE}
 };
 
 pub const GROUND_WIDTH: f32 = 16.0;
@@ -36,7 +37,7 @@ impl Plugin for GroundPlugin {
                 build_ground_underneath_cat,
                 despawn_temp_ground,
             )
-                    .run_if(on_event::<GroundBuildEvent>())
+                .run_if(on_event::<GroundBuildEvent>())
             )
         ;
     }
@@ -45,10 +46,11 @@ impl Plugin for GroundPlugin {
 fn spawn_new_ground(
     mut commands: Commands,
     mut window_resized_reader: EventReader<WindowResized>,
+    mut event_writer: EventWriter<FloraSpawnEvent>,
     asset_server: Res<AssetServer>
 ) {
     for window in window_resized_reader.read() {
-        let ground_count = ((window.width/SCALE_FACTOR)/GROUND_WIDTH).ceil();
+        let ground_count = ((window.width/SCALE_FACTOR)/GROUND_WIDTH).floor();
         let initial_x_pos = -((window.width/2.0)/SCALE_FACTOR) + GROUND_WIDTH/2.0;
         let y_pos = -(window.height/2.0)/SCALE_FACTOR;
 
@@ -67,20 +69,24 @@ fn spawn_new_ground(
             ground_sprite.transform.translation.y = y_pos;
             ground_sprite.transform.translation.x = initial_x_pos + (i as f32 * GROUND_WIDTH * GROUND_SPACING);
 
-            commands.spawn((
+            let ground_entity = commands.spawn((
                 ground_sprite,
                 Ground,
-            ));
+            )).id();
+
+            if random::<f32>() < FLORA_SPAWN_RATE {
+                event_writer.send(FloraSpawnEvent(ground_entity));
+            }
         }
     }
 }
 
 fn despawn_old_ground(
     mut commands: Commands,
-    ground_query: Query<Entity, With<Ground>>,
+    ground_query: Query<Entity, (With<Ground>, Without<TempGround>)>,
 ) {
     for entity in &ground_query {
-        commands.entity(entity).despawn()
+        commands.entity(entity).despawn_recursive()
     }
 }
 
