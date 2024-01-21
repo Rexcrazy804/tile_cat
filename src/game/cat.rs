@@ -9,17 +9,15 @@ use super::{
     FRICTION,
 
     bullet::BulletFireEvent,
-    ground::{Ground, GROUND_SIZE},
+    ground::{Ground, GROUND_WIDTH, GroundBuildEvent, GROUND_HEIGHT},
 };
 
 pub const CAT_SIZE: f32 = 16.0;
 const CAT_SPEEED: f32 = 25.0;
-const CAT_JUMP_FORCE: f32 = 100.0;
+const CAT_JUMP_FORCE: f32 = 80.0;
 const CAT_BULLET_ANIMATION_DURATION: f32 = 0.12;
 const MAX_COLLISION_RADIUS: f32 = 1.1;
-
-// subtracts from jump force when gun is equiped
-const CAT_GUN_WEIGHT: f32 = 20.0; 
+const CAT_GUN_WEIGHT: f32 = 10.0; // subtracts from jump force when gun is equiped
 
 #[derive(Component)]
 pub struct Cat {
@@ -59,6 +57,7 @@ impl Plugin for CatPlugin {
                 animate_cat,
                 toggle_cat_gun,
                 fire_bullet_cat,
+                build_ground_cat,
             )
                 .run_if(in_state(SimulationState::Running))
                 .run_if(in_state(GameState::Game))
@@ -164,15 +163,15 @@ fn confine_cat(
     // ground_collision
     for ground_transfrom in &ground_query {
         let mut ground_top = ground_transfrom.translation;
-        ground_top.y += GROUND_SIZE/2.0;
+        ground_top.y += GROUND_WIDTH/2.0;
 
         let mut cat_bottom = cat_transform.translation;
         cat_bottom.y -= CAT_SIZE/2.0;
 
-        if !(cat_bottom.x > ground_top.x - GROUND_SIZE/2.0 && cat_bottom.x < ground_top.x + GROUND_SIZE/2.0) { continue }
-        if cat_bottom.distance(ground_top) > GROUND_SIZE * MAX_COLLISION_RADIUS { continue }
+        if !(cat_bottom.x > ground_top.x - GROUND_WIDTH/2.0 && cat_bottom.x < ground_top.x + GROUND_WIDTH/2.0) { continue }
+        if cat_bottom.distance(ground_top) > GROUND_HEIGHT * MAX_COLLISION_RADIUS { continue }
 
-        let ground_limit = ground_transfrom.translation.y + GROUND_SIZE;
+        let ground_limit = ground_transfrom.translation.y + GROUND_WIDTH;
 
         if cat_transform.translation.y < ground_limit {
             cat_transform.translation.y = ground_limit;
@@ -262,5 +261,17 @@ fn fire_bullet_cat(
         bullet_fire_writer.send(BulletFireEvent(direction_multiplier));
         anim_time.0.reset();
         cat.is_firing = true;
+    }
+}
+
+fn build_ground_cat(
+    key_input: Res<Input<KeyCode>>,
+    mut ground_build_writer: EventWriter<GroundBuildEvent>,
+    transform_query: Query<&Transform, With<Cat>>,
+) {
+    let Ok(transform) = transform_query.get_single() else { return };
+
+    if key_input.just_pressed(KeyCode::ShiftLeft) {
+        ground_build_writer.send(GroundBuildEvent(transform.translation.clone()));
     }
 }
