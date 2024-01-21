@@ -16,7 +16,7 @@ pub const CAT_SIZE: f32 = 16.0;
 const CAT_SPEEED: f32 = 25.0;
 const CAT_JUMP_FORCE: f32 = 100.0;
 const CAT_BULLET_ANIMATION_DURATION: f32 = 0.12;
-const MAX_COLLISION_FACTOR: f32 = 1.2;
+const MAX_COLLISION_RADIUS: f32 = 1.1;
 
 // subtracts from jump force when gun is equiped
 const CAT_GUN_WEIGHT: f32 = 20.0; 
@@ -161,6 +161,7 @@ fn confine_cat(
         cat_transform.translation.x = x_max
     }
 
+    // ground_collision
     for ground_transfrom in &ground_query {
         let mut ground_top = ground_transfrom.translation;
         ground_top.y += GROUND_SIZE/2.0;
@@ -168,7 +169,8 @@ fn confine_cat(
         let mut cat_bottom = cat_transform.translation;
         cat_bottom.y -= CAT_SIZE/2.0;
 
-        if cat_bottom.distance(ground_top) > MAX_COLLISION_FACTOR * GROUND_SIZE/2.0 { continue }
+        if !(cat_bottom.x > ground_top.x - GROUND_SIZE/2.0 && cat_bottom.x < ground_top.x + GROUND_SIZE/2.0) { continue }
+        if cat_bottom.distance(ground_top) > GROUND_SIZE * MAX_COLLISION_RADIUS { continue }
 
         let ground_limit = ground_transfrom.translation.y + GROUND_SIZE;
 
