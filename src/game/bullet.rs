@@ -53,7 +53,7 @@ fn spawn_bullet(
     for direction_multiplier in bullet_fire_reader.read() {
         let Ok(cat_transform) = cat_query.get_single() else { return };
 
-        let mut bullet_transform = cat_transform.clone();
+        let mut bullet_transform = *cat_transform;
         bullet_transform.translation.x += direction_multiplier.0 * (CAT_SIZE/2.0 + BULLET_SIZE/2.0);
         bullet_transform.translation.y -= BULLET_Y_OFFSET;
 

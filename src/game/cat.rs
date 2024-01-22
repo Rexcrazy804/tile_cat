@@ -216,7 +216,7 @@ fn animate_cat(
     }
 
     if cat.can_jump {
-        sprite.index = 0 + if cat.has_gun { 2 } else { 0 };
+        sprite.index = if cat.has_gun { 2 } else { 0 };
     } else {
         sprite.index = 1 + if cat.has_gun { 2 } else { 0 };
     }
@@ -272,6 +272,6 @@ fn build_ground_cat(
     let Ok(transform) = transform_query.get_single() else { return };
 
     if key_input.just_pressed(KeyCode::ShiftLeft) {
-        ground_build_writer.send(GroundBuildEvent(transform.translation.clone()));
+        ground_build_writer.send(GroundBuildEvent(transform.translation));
     }
 }

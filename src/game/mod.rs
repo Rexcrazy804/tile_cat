@@ -68,7 +68,7 @@ fn spawn_background(
 
     let mut my_background = SpriteBundle {
         sprite: Sprite {
-            color: Color::hex("#fcdfcd").unwrap().into(),
+            color: Color::hex("#fcdfcd").unwrap(),
             custom_size: Some(
                 Vec2::new(
                     window.width() / SCALE_FACTOR, 
@@ -94,8 +94,8 @@ fn resize_bacground(
     let Ok(mut background_sprite) = background_query.get_single_mut() else { return };
     for window_resized in window_reized_reader.read() {
         background_sprite.custom_size = Some(Vec2::new(
-            (window_resized.width/SCALE_FACTOR).into(),
-            (window_resized.height/SCALE_FACTOR).into(),
+            window_resized.width/SCALE_FACTOR,
+            window_resized.height/SCALE_FACTOR,
         ))
     }
 }
