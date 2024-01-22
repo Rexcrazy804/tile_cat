@@ -34,7 +34,7 @@ impl Plugin for GroundPlugin {
                 .run_if(on_event::<WindowResized>())
             )
             .add_systems(Update, (
-                build_ground_underneath_cat,
+                spawn_beneath_cat,
                 despawn_temp_ground,
             )
                 .run_if(on_event::<GroundBuildEvent>())
@@ -93,7 +93,7 @@ fn despawn_old_ground(
     }
 }
 
-fn build_ground_underneath_cat(
+fn spawn_beneath_cat(
     mut commands: Commands,
     mut ground_build_reader: EventReader<GroundBuildEvent>,
     asset_server: Res<AssetServer>,
@@ -121,21 +121,14 @@ fn despawn_temp_ground(
     mut commands: Commands,
     query: Query<Entity, With<TempGround>>,
 ) {
-    let mut vec: Vec<Entity> = Vec::new();
+    let mut vec: Vec<Entity> = query.iter().collect();
+    if vec.len() < MAX_TEMP_GROUND { return }
 
-    for entity in &query {
-        vec.push(entity);
-    }
-    if vec.len() <= MAX_TEMP_GROUND { return }
-
-    vec.sort();
     let removable = vec.len() - MAX_TEMP_GROUND;
-    let mut i = 0;
+    vec.sort();
 
-    for entity in vec {
-        if i < removable {
-            commands.entity(entity).despawn();
-            i += 1;
-        }
+    for (i, &entity) in vec.iter().enumerate() {
+        if i > removable { break }
+        commands.entity(entity).despawn();
     }
 }
