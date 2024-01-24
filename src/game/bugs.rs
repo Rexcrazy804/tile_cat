@@ -1,5 +1,5 @@
 use bevy::{prelude::*, window::PrimaryWindow};
-use rand::random;
+use rand::{random, Rng};
 
 use super::{
     GameState,
@@ -12,13 +12,10 @@ pub const BUG_SIZE: f32 = 16.0;
 const BUG_SPAWN_RATE: f32 = 1.84;
 const BUG_SPEED: f32 = 20.0;
 const BUG_ANIMATION_INTERVAL: f32 = 0.4;
+const SPAWN_HORIZONTAL_PADDING: f32 = 16.0;
 
 #[derive(Component)]
 struct Bug;
-
-#[derive(Component)]
-struct Flight;
-
 
 pub struct BugPlugin;
 impl Plugin for BugPlugin {
@@ -62,14 +59,22 @@ fn init_bug_texture(
         Vec2::new(16.0, 16.0),
         2, 1, None, None,
     );
+
     let bug2_atlas = TextureAtlas::from_grid (
         asset_server.load("sprites/bugs/fly_bug_1.png"),
         Vec2::new(16.0, 16.0),
         2, 1, None, None,
     );
 
+    let bug3_atlas = TextureAtlas::from_grid (
+        asset_server.load("sprites/bugs/bug_0.png"),
+        Vec2::new(16.0, 16.0),
+        2, 1, None, None,
+    );
+
     atlas_resource.0.push(texture_atlases.add(bug1_atlas));
     atlas_resource.0.push(texture_atlases.add(bug2_atlas));
+    atlas_resource.0.push(texture_atlases.add(bug3_atlas));
 }
 
 fn spawn_bug(
@@ -83,17 +88,23 @@ fn spawn_bug(
     if !timer.0.tick(time.delta()).just_finished() { return }
     let Ok(window) = window_query.get_single() else { return };
 
+    let bug_selector = rand::thread_rng().gen_range(0..3);
+
     let mut bug_sprite = SpriteSheetBundle {
-        texture_atlas: bug_atlas.0[
-            if random::<bool>() { 1 } else { 0 }
-        ].clone(),
+        texture_atlas: bug_atlas.0[bug_selector].clone(),
         sprite: TextureAtlasSprite::new(0),
         ..default()
     };
 
     let transform = &mut bug_sprite.transform.translation;
 
-    transform.y = (window.height()/SCALE_FACTOR)/2.0 * random::<f32>() * if random::<bool>() { -1.0 } else { 1.0 };
+    if bug_selector == 2 { // CRAWLING BUG == 2, hence you don't want vertical random offset
+        transform.y = -(window.height()/SCALE_FACTOR)/2.0 + SPAWN_HORIZONTAL_PADDING
+    } else {
+        transform.y = ((window.height()/SCALE_FACTOR)/2.0 - SPAWN_HORIZONTAL_PADDING)
+            * random::<f32>()
+            * if random::<bool>() { -1.0 } else { 1.0 };
+    }
     transform.x = -(window.width()/SCALE_FACTOR)/2.0 - BUG_SIZE/2.0;
 
     commands.spawn((
