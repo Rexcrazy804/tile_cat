@@ -8,7 +8,9 @@ use super::{
 };
 
 pub const BUG_SIZE: f32 = 16.0;
+const BUG_SPAWN_RATE: f32 = 1.84;
 const BUG_SPEED: f32 = 10.0;
+const BUG_ANIMATION_INTERVAL: f32 = 0.4;
 
 #[derive(Component)]
 struct Bug;
@@ -16,13 +18,21 @@ struct Bug;
 #[derive(Component)]
 struct Flight;
 
+
 pub struct BugPlugin;
 impl Plugin for BugPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(OnEnter(GameState::Game), spawn_bug)
+            .insert_resource(BugSpawnTimer(Timer::from_seconds(BUG_SPAWN_RATE, TimerMode::Repeating)))
+            .insert_resource(BugAnimateTimer(Timer::from_seconds(BUG_ANIMATION_INTERVAL, TimerMode::Repeating)))
+            .insert_resource(BugAtlas(Vec::new()))
+
+            .add_systems(OnEnter(GameState::Game), init_bug_texture)
             .add_systems(Update, (
-                move_bug
+                move_bug,
+                spawn_bug,
+                despawn_bug,
+                animate_bugs,
             )
                 .run_if(in_state(GameState::Game))
                 .run_if(in_state(SimulationState::Running))
@@ -31,15 +41,51 @@ impl Plugin for BugPlugin {
     }
 }
 
+#[derive(Resource)]
+struct BugSpawnTimer(Timer);
+
+#[derive(Resource)]
+struct BugAnimateTimer(Timer);
+
+#[derive(Resource)]
+struct BugAtlas(Vec<Handle<TextureAtlas>>);
+
+fn init_bug_texture(
+    asset_server: Res<AssetServer>,
+    mut atlas_resource: ResMut<BugAtlas>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>
+) {
+    let bug1_atlas = TextureAtlas::from_grid (
+        asset_server.load("sprites/bugs/fly_bug_0.png"),
+        Vec2::new(16.0, 16.0),
+        2, 1, None, None,
+    );
+    let bug2_atlas = TextureAtlas::from_grid (
+        asset_server.load("sprites/bugs/fly_bug_1.png"),
+        Vec2::new(16.0, 16.0),
+        2, 1, None, None,
+    );
+
+    atlas_resource.0.push(texture_atlases.add(bug1_atlas));
+    atlas_resource.0.push(texture_atlases.add(bug2_atlas));
+}
+
 fn spawn_bug(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    mut timer: ResMut<BugSpawnTimer>,
+
+    bug_atlas: Res<BugAtlas>,
     window_query: Query<&Window, With<PrimaryWindow>>,
+    time: Res<Time>
 ) {
+    if !timer.0.tick(time.delta()).just_finished() { return }
     let Ok(window) = window_query.get_single() else { return };
 
-    let mut bug_sprite = SpriteBundle {
-        texture: asset_server.load("sprites/bugs/bug_0_1.png"),
+    let mut bug_sprite = SpriteSheetBundle {
+        texture_atlas: bug_atlas.0[
+            if random::<bool>() { 1 } else { 0 }
+        ].clone(),
+        sprite: TextureAtlasSprite::new(0),
         ..default()
     };
 
@@ -60,5 +106,30 @@ fn move_bug(
 ) {
     for mut bug_transform in &mut bug_query {
         bug_transform.translation.x += BUG_SPEED * time.delta_seconds();
+    }
+}
+
+fn despawn_bug(
+    mut commands: Commands,
+    transform_query: Query<(&Transform, Entity), With<Bug>>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+) {
+    let Ok(window) = window_query.get_single() else { return };
+    for (transform, entity) in &transform_query {
+        if transform.translation.x - (BUG_SIZE/2.0) > (window.width()/2.0)/SCALE_FACTOR {
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
+fn animate_bugs(
+    mut query: Query<&mut TextureAtlasSprite, With<Bug>>,
+    mut animation_timer: ResMut<BugAnimateTimer>,
+    time: Res<Time>,
+) {
+    if !animation_timer.0.tick(time.delta()).just_finished() { return }
+
+    for mut sprite in &mut query {
+        sprite.index = if sprite.index == 0 { 1 } else { 0 };
     }
 }
