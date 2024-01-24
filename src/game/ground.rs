@@ -43,7 +43,7 @@ impl Plugin for GroundPlugin {
     }
 }
 
-fn spawn_new_ground(
+pub(crate) fn spawn_new_ground(
     mut commands: Commands,
     mut window_resized_reader: EventReader<WindowResized>,
     mut event_writer: EventWriter<FloraSpawnEvent>,

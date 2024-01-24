@@ -16,7 +16,7 @@ impl Plugin for FloraPlugin {
         app
             .add_event::<FloraSpawnEvent>()
             .add_systems(Update, 
-                spawn_flora
+                spawn_flora.after(super::ground::spawn_new_ground)
                     .run_if(on_event::<FloraSpawnEvent>())
             )
         ;
@@ -42,7 +42,6 @@ fn spawn_flora(
 
         flora_sprite.transform.translation.y += FLORA_SIZE;
         flora_sprite.transform.translation.z = -0.1;
-
 
         commands.entity(*entity).with_children(|parent| {
             parent.spawn((
