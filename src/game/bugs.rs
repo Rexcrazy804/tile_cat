@@ -5,11 +5,12 @@ use super::{
     GameState,
     SimulationState,
     SCALE_FACTOR,
+    bullet::Bullet,
 };
 
 pub const BUG_SIZE: f32 = 16.0;
 const BUG_SPAWN_RATE: f32 = 1.84;
-const BUG_SPEED: f32 = 10.0;
+const BUG_SPEED: f32 = 20.0;
 const BUG_ANIMATION_INTERVAL: f32 = 0.4;
 
 #[derive(Component)]
@@ -33,6 +34,7 @@ impl Plugin for BugPlugin {
                 spawn_bug,
                 despawn_bug,
                 animate_bugs,
+                eat_bullet_bug,
             )
                 .run_if(in_state(GameState::Game))
                 .run_if(in_state(SimulationState::Running))
@@ -131,5 +133,20 @@ fn animate_bugs(
 
     for mut sprite in &mut query {
         sprite.index = if sprite.index == 0 { 1 } else { 0 };
+    }
+}
+
+fn eat_bullet_bug(
+    mut commands: Commands,
+    bullet_query: Query<(&Transform, Entity), With<Bullet>>,
+    bug_query: Query<(&Transform, Entity), With<Bug>>,
+) {
+    for (bullet_tranform, bullet) in &bullet_query {
+        for (bug_tranform, bug) in &bug_query {
+            if bullet_tranform.translation.distance(bug_tranform.translation) < BUG_SIZE {
+                commands.entity(bug).despawn();
+                commands.entity(bullet).despawn();
+            }
+        }
     }
 }

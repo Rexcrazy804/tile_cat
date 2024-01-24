@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use rand::Rng;
 
+use super::ground::spawn_new_ground;
+
 pub const FLORA_SPAWN_RATE: f32 = 0.12;
 const FLORA_SIZE: f32 = 16.0;
 
@@ -16,7 +18,7 @@ impl Plugin for FloraPlugin {
         app
             .add_event::<FloraSpawnEvent>()
             .add_systems(Update, 
-                spawn_flora.after(super::ground::spawn_new_ground)
+                spawn_flora.after(spawn_new_ground)
                     .run_if(on_event::<FloraSpawnEvent>())
             )
         ;

@@ -14,7 +14,7 @@ const BULLET_SPEED: f32 = 400.0;
 const BULLET_Y_OFFSET: f32 = 2.0;
 
 #[derive(Component)]
-struct Bullet {
+pub struct Bullet {
     direction_multiplier: f32,
 }
 
@@ -22,7 +22,7 @@ struct Bullet {
 pub struct BulletFireEvent(pub f32);
 
 #[derive(Event)]
-struct DestroyBulletEvent(Entity);
+struct DestroyBulletEvent(pub Entity);
 
 pub struct BulletPlugin;
 impl Plugin for BulletPlugin {
