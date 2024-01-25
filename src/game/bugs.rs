@@ -9,7 +9,7 @@ use super::{
 };
 
 pub const BUG_SIZE: f32 = 16.0;
-const BUG_SPAWN_RATE: f32 = 1.84;
+const BUG_SPAWN_RATE: f32 = 0.84;
 const BUG_SPEED: f32 = 20.0;
 const BUG_ANIMATION_INTERVAL: f32 = 0.4;
 const SPAWN_HORIZONTAL_PADDING: f32 = 16.0;
@@ -25,12 +25,12 @@ impl Plugin for BugPlugin {
             .insert_resource(BugAnimateTimer(Timer::from_seconds(BUG_ANIMATION_INTERVAL, TimerMode::Repeating)))
             .insert_resource(BugAtlas(Vec::new()))
 
-            .add_systems(OnEnter(GameState::Game), init_bug_texture)
+            .add_systems(OnEnter(GameState::Game), init_bug_atlases)
             .add_systems(Update, (
                 move_bug,
                 spawn_bug,
                 despawn_bug,
-                animate_bugs,
+                animate_bug,
                 eat_bullet_bug,
             )
                 .run_if(in_state(GameState::Game))
@@ -49,7 +49,7 @@ struct BugAnimateTimer(Timer);
 #[derive(Resource)]
 struct BugAtlas(Vec<Handle<TextureAtlas>>);
 
-fn init_bug_texture(
+fn init_bug_atlases(
     asset_server: Res<AssetServer>,
     mut atlas_resource: ResMut<BugAtlas>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>
@@ -135,7 +135,7 @@ fn despawn_bug(
     }
 }
 
-fn animate_bugs(
+fn animate_bug(
     mut query: Query<&mut TextureAtlasSprite, With<Bug>>,
     mut animation_timer: ResMut<BugAnimateTimer>,
     time: Res<Time>,
