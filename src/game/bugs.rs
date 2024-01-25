@@ -26,6 +26,8 @@ impl Plugin for BugPlugin {
             .insert_resource(BugAtlas(Vec::new()))
 
             .add_systems(OnEnter(GameState::Game), init_bug_atlases)
+            .add_systems(OnExit(GameState::Game), despawn_all_bugs)
+
             .add_systems(Update, (
                 move_bug,
                 spawn_bug,
@@ -36,6 +38,7 @@ impl Plugin for BugPlugin {
                 .run_if(in_state(GameState::Game))
                 .run_if(in_state(SimulationState::Running))
             )
+
         ;
     }
 }
@@ -132,6 +135,15 @@ fn despawn_bug(
         if transform.translation.x - (BUG_SIZE/2.0) > (window.width()/2.0)/SCALE_FACTOR {
             commands.entity(entity).despawn();
         }
+    }
+}
+
+fn despawn_all_bugs(
+    mut commands: Commands,
+    query: Query<Entity, With<Bug>>,
+) {
+    for entity in &query {
+        commands.entity(entity).despawn();
     }
 }
 

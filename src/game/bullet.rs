@@ -30,6 +30,8 @@ impl Plugin for BulletPlugin {
         app
             .add_event::<BulletFireEvent>()
             .add_event::<DestroyBulletEvent>()
+
+            .add_systems(OnExit(GameState::Game), despawn_all_bullets)
             .add_systems(Update, (
                 spawn_bullet.run_if(on_event::<BulletFireEvent>()),
                 move_bullet,
@@ -94,5 +96,14 @@ fn despawn_bullet(
 ) {
     for entity in destruction_reader.read() {
         commands.entity(entity.0).despawn();
+    }
+}
+
+fn despawn_all_bullets(
+    mut commands: Commands,
+    query: Query<Entity, With<Bullet>>,
+) {
+    for entity in &query {
+        commands.entity(entity).despawn();
     }
 }

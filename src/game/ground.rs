@@ -27,6 +27,7 @@ impl Plugin for GroundPlugin {
         app
             .add_event::<GroundBuildEvent>()
             .add_systems(OnEnter(GameState::Game), spawn_ground)
+            .add_systems(OnExit(GameState::Game), despawn_all_ground)
             .add_systems(Update, (
                 despawn_old_ground,
                 spawn_new_ground,
@@ -173,5 +174,14 @@ fn despawn_temp_ground(
     for (i, &entity) in vec.iter().enumerate() {
         if i > removable { break }
         commands.entity(entity).despawn();
+    }
+}
+
+fn despawn_all_ground(
+    mut commands: Commands,
+    query: Query<Entity, With<Ground>>,
+) {
+    for entity in &query {
+        commands.entity(entity).despawn_recursive();
     }
 }

@@ -30,7 +30,6 @@ pub fn button_interactions(
                 ButtonType::Resume => next_sim_state.set(SimulationState::Running),
                 ButtonType::ReturnToMenu => {
                     next_game_state.set(GameState::MainMenu);
-                    next_sim_state.set(SimulationState::InActive);
                 },
             };
         }

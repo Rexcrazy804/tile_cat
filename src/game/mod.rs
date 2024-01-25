@@ -43,6 +43,10 @@ impl Plugin for GamePlugin {
                 spawn_background,
                 start_simulation,
             ))
+            .add_systems(OnExit(GameState::Game), (
+                despawn_background,
+                stop_simulation,
+            ))
 
             .add_systems(Update, (
                 toggle_simulation,
@@ -85,6 +89,15 @@ fn spawn_background(
     ));
 }
 
+fn despawn_background(
+    mut commands: Commands,
+    query: Query<Entity, With<Background>>
+) {
+    let Ok(entity) = query.get_single() else { return };
+    commands.entity(entity).despawn();
+}
+
+
 fn resize_bacground(
     mut background_query: Query<&mut Sprite, With<Background>>,
     mut window_reized_reader: EventReader<WindowResized>
@@ -104,6 +117,11 @@ fn start_simulation(
     next_state.set(SimulationState::Running)
 }
 
+fn stop_simulation(
+    mut next_state: ResMut<NextState<SimulationState>>
+) {
+    next_state.set(SimulationState::InActive)
+}
 
 fn toggle_simulation(
     key_input: Res<Input<KeyCode>>,
