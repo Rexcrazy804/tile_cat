@@ -1,7 +1,7 @@
 use bevy::{app::AppExit, prelude::*};
 use super::GameState;
 
-const DEFUALT_BUTTON_COLOR: Color = Color::rgb(0.2, 0.2, 0.2);
+const DEFUALT_BUTTON_COLOR: Color = Color::rgb(0.15, 0.15, 0.15);
 const HOVER_BUTTON_COLOR: Color = Color::rgb(0.3, 0.3, 0.3);
 const PRESSED_BUTTON_COLOR: Color = Color::rgb(0.1, 0.1, 0.1);
 
@@ -9,6 +9,30 @@ const PRESSED_BUTTON_COLOR: Color = Color::rgb(0.1, 0.1, 0.1);
 pub enum ButtonType {
     PlayButton,
     QuitButton,
+}
+
+pub fn button_interactions(
+    mut next_state: ResMut<NextState<GameState>>,
+    mut query: Query<(&Interaction, &ButtonType, &mut BackgroundColor), Changed<Interaction>>,
+    mut exit_event_writer: EventWriter<AppExit>,
+) {
+    for (&interaction, button_type, background) in &mut query {
+        handle_background(interaction, background);
+        if interaction == Interaction::Pressed {
+            match *button_type {
+                ButtonType::PlayButton => next_state.set(GameState::Game),
+                ButtonType::QuitButton => exit_event_writer.send(AppExit),
+            };
+        }
+    }
+}
+
+fn handle_background(interaction: Interaction, mut background: Mut<'_, BackgroundColor>) {
+    match interaction {
+        Interaction::Pressed => *background = PRESSED_BUTTON_COLOR.into(),
+        Interaction::Hovered => *background = HOVER_BUTTON_COLOR.into(),
+        Interaction::None => *background = DEFUALT_BUTTON_COLOR.into(),
+    };
 }
 
 fn default_button_style() -> Style {
@@ -54,7 +78,7 @@ pub fn attach_button(
 ) {
     let button = ButtonBundle {
         style: default_button_style(),
-        background_color: Color::rgb(0.0, 0.0, 0.0).into(),
+        background_color: DEFUALT_BUTTON_COLOR.into(),
         ..default()
     };
 
@@ -68,26 +92,3 @@ pub fn attach_button(
     ;
 }
 
-pub fn button_interactions(
-    mut next_state: ResMut<NextState<GameState>>,
-    mut query: Query<(&Interaction, &ButtonType, &mut BackgroundColor), Changed<Interaction>>,
-    mut exit_event_writer: EventWriter<AppExit>,
-) {
-    for (&interaction, button_type, background) in &mut query {
-        handle_background(interaction, background);
-        if interaction == Interaction::Pressed {
-            match *button_type {
-                ButtonType::PlayButton => next_state.set(GameState::Game),
-                ButtonType::QuitButton => exit_event_writer.send(AppExit),
-            };
-        }
-    }
-}
-
-fn handle_background(interaction: Interaction, mut background: Mut<'_, BackgroundColor>) {
-    match interaction {
-        Interaction::Pressed => *background = PRESSED_BUTTON_COLOR.into(),
-        Interaction::Hovered => *background = HOVER_BUTTON_COLOR.into(),
-        Interaction::None => *background = DEFUALT_BUTTON_COLOR.into(),
-    };
-}
