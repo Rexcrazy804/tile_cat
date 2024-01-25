@@ -1,4 +1,4 @@
-use bevy::{prelude::*, window::PrimaryWindow};
+use bevy::{prelude::*, window::{PrimaryWindow, WindowResized}};
 use rand::{random, Rng};
 
 use super::{
@@ -17,6 +17,9 @@ const SPAWN_HORIZONTAL_PADDING: f32 = 16.0;
 #[derive(Component)]
 struct Bug;
 
+#[derive(Component)]
+struct NoFlight;
+
 pub struct BugPlugin;
 impl Plugin for BugPlugin {
     fn build(&self, app: &mut App) {
@@ -34,6 +37,7 @@ impl Plugin for BugPlugin {
                 despawn_bug,
                 animate_bug,
                 eat_bullet_bug,
+                push_down_flightless_bug.run_if(on_event::<WindowResized>()),
             )
                 .run_if(in_state(GameState::Game))
                 .run_if(in_state(SimulationState::Running))
@@ -110,10 +114,14 @@ fn spawn_bug(
     }
     transform.x = -(window.width()/SCALE_FACTOR)/2.0 - BUG_SIZE/2.0;
 
-    commands.spawn((
+    let bug_entity = commands.spawn((
         bug_sprite,
         Bug,
-    ));
+    )).id();
+
+    if bug_selector == 2 {
+        commands.entity(bug_entity).insert(NoFlight);
+    }
 }
 
 fn move_bug(
@@ -170,6 +178,17 @@ fn eat_bullet_bug(
                 commands.entity(bug).despawn();
                 commands.entity(bullet).despawn();
             }
+        }
+    }
+}
+
+fn push_down_flightless_bug(
+    mut window_resize: EventReader<WindowResized>,
+    mut query: Query<&mut Transform, With<NoFlight>>
+) {
+    for window in window_resize.read() {
+        for mut transform in &mut query {
+            transform.translation.y = -(window.height/SCALE_FACTOR)/2.0 + SPAWN_HORIZONTAL_PADDING
         }
     }
 }
