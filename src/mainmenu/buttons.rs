@@ -35,50 +35,36 @@ fn handle_background(interaction: Interaction, mut background: Mut<'_, Backgroun
     };
 }
 
-fn default_button_style() -> Style {
-    Style {
-        width: Val::Percent(10.0),
-        height: Val::Percent(5.0),
-        justify_content: JustifyContent::Center,
-        align_items: AlignItems::Center,
-        ..default()
-    }
-} 
-
-fn default_text_style() -> TextStyle {
-    TextStyle {
-        font_size: 14.0,
-        color: Color::WHITE,
-        ..default()
-    }
-}
-
-fn attach_text(
-    parent: &mut ChildBuilder,
-    text: &str,
-) {
-    let text = TextBundle {
-        text: Text::from_section(
-            text, 
-            default_text_style()
-        ),
-        ..default()
-    };
-
-    parent.spawn(
-        text
-    );
-}
-
-
 pub fn attach_button(
     parent: &mut ChildBuilder,
     button_type: ButtonType,
     button_text: &str,
 ) {
+    let button_style = Style {
+        width: Val::Percent(10.0),
+        height: Val::Percent(5.0),
+        justify_content: JustifyContent::Center,
+        align_items: AlignItems::Center,
+        ..default()
+    };
+
+    let text_style = TextStyle {
+        font_size: 14.0,
+        color: Color::WHITE,
+        ..default()
+    };
+
     let button = ButtonBundle {
-        style: default_button_style(),
+        style: button_style,
         background_color: DEFUALT_BUTTON_COLOR.into(),
+        ..default()
+    };
+
+    let text = TextBundle {
+        text: Text::from_section(
+            button_text, 
+            text_style
+        ),
         ..default()
     };
 
@@ -87,7 +73,7 @@ pub fn attach_button(
         button_type,
     ))
         .with_children(|parent| {
-            attach_text(parent, button_text)
+            parent.spawn(text);
         })
     ;
 }
