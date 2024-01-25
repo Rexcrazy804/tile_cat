@@ -1,4 +1,4 @@
-use bevy::{prelude::*, window::WindowResized};
+use bevy::{prelude::*, window::{PrimaryWindow, WindowResized}};
 
 use rand::random;
 use super::{
@@ -26,10 +26,12 @@ impl Plugin for GroundPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_event::<GroundBuildEvent>()
+            .add_systems(OnEnter(GameState::Game), spawn_ground)
             .add_systems(Update, (
                 despawn_old_ground,
                 spawn_new_ground,
             )
+                .chain()
                 .run_if(in_state(GameState::Game))
                 .run_if(on_event::<WindowResized>())
             )
@@ -40,6 +42,47 @@ impl Plugin for GroundPlugin {
                 .run_if(on_event::<GroundBuildEvent>())
             )
         ;
+    }
+}
+
+fn spawn_ground(
+    mut commands: Commands,
+    mut event_writer: EventWriter<FloraSpawnEvent>,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+    asset_server: Res<AssetServer>
+) {
+    let Ok(window) = window_query.get_single() else { warn!("No window Available"); return };
+
+    let raw_ground_count = (window.width()/SCALE_FACTOR)/GROUND_WIDTH;
+    let ground_count = raw_ground_count.floor();
+    let space = raw_ground_count - ground_count;
+
+    let initial_x_pos = -((window.width()/2.0)/SCALE_FACTOR) + GROUND_WIDTH/2.0 + (space*SCALE_FACTOR)*2.0;
+    let y_pos = -(window.height()/2.0)/SCALE_FACTOR;
+
+    let random_sprite = || {
+        format!( "sprites/ground/ground_{}.png",
+            if random::<bool>() { 1 } else { 2 }
+        )
+    };
+
+    for i in 0..ground_count as usize {
+        let mut ground_sprite = SpriteBundle {
+            texture: asset_server.load(random_sprite()),
+            ..default()
+        };
+
+        ground_sprite.transform.translation.y = y_pos;
+        ground_sprite.transform.translation.x = initial_x_pos + (i as f32 * GROUND_WIDTH * GROUND_SPACING);
+
+        let ground_entity = commands.spawn((
+            ground_sprite,
+            Ground,
+        )).id();
+
+        if random::<f32>() < FLORA_SPAWN_RATE {
+            event_writer.send(FloraSpawnEvent(ground_entity));
+        }
     }
 }
 

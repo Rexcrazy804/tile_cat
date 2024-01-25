@@ -1,7 +1,10 @@
 use bevy::{prelude::*, app::AppExit};
 
 mod game;
+mod mainmenu;
+
 use game::GamePlugin;
+use mainmenu::MainMenuPlugin;
 
 pub const SCALE_FACTOR: f32 = 4.0;
 
@@ -19,7 +22,8 @@ fn main() {
                     }),
                     ..default()
                 }),
-            GamePlugin
+            GamePlugin,
+            MainMenuPlugin,
         ))
         .add_state::<GameState>()
         .add_systems(Startup, spawn_camera)
@@ -28,13 +32,11 @@ fn main() {
     ;
 }
 
-#[allow(dead_code)]
 #[derive(States, Default, Clone, Copy, Debug, Hash, Eq, PartialEq)]
-enum GameState {
-    MainMenu,
+pub enum GameState {
     #[default]
+    MainMenu,
     Game,
-    Gameover
 }
 
 fn spawn_camera(
