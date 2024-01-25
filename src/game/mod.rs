@@ -1,7 +1,8 @@
 use bevy::{prelude::*, window::{PrimaryWindow, WindowResized}};
 use crate::{
     GameState,
-    SCALE_FACTOR
+    SCALE_FACTOR,
+    SimulationState
 };
 
 mod cat;
@@ -38,7 +39,11 @@ impl Plugin for GamePlugin {
                 BugPlugin,
             ))
 
-            .add_systems(OnEnter(GameState::Game), spawn_background)
+            .add_systems(OnEnter(GameState::Game), (
+                spawn_background,
+                start_simulation,
+            ))
+
             .add_systems(Update, (
                 toggle_simulation,
                 resize_bacground,
@@ -46,13 +51,6 @@ impl Plugin for GamePlugin {
                 .run_if(in_state(GameState::Game)))
         ;
     }
-}
-
-#[derive(States, Default, Clone, Copy, Debug, Hash, Eq, PartialEq)]
-enum SimulationState {
-    #[default]
-    Running,
-    Paused
 }
 
 enum EntityDirection {
@@ -100,6 +98,12 @@ fn resize_bacground(
     }
 }
 
+fn start_simulation(
+    mut next_state: ResMut<NextState<SimulationState>>
+) {
+    next_state.set(SimulationState::Running)
+}
+
 
 fn toggle_simulation(
     key_input: Res<Input<KeyCode>>,
@@ -110,5 +114,6 @@ fn toggle_simulation(
     match *current_state.get() {
         SimulationState::Running => next_state.set(SimulationState::Paused),
         SimulationState::Paused => next_state.set(SimulationState::Running),
+        SimulationState::InActive => (),
     }
 }

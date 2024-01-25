@@ -1,10 +1,10 @@
 use bevy::{prelude::*, app::AppExit};
 
 mod game;
-mod mainmenu;
+mod menu;
 
 use game::GamePlugin;
-use mainmenu::MainMenuPlugin;
+use menu::MainMenuPlugin;
 
 pub const SCALE_FACTOR: f32 = 4.0;
 
@@ -37,6 +37,14 @@ pub enum GameState {
     #[default]
     MainMenu,
     Game,
+}
+
+#[derive(States, Default, Clone, Copy, Debug, Hash, Eq, PartialEq)]
+pub enum SimulationState {
+    #[default]
+    InActive,
+    Running,
+    Paused
 }
 
 fn spawn_camera(

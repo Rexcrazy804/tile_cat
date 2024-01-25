@@ -1,4 +1,6 @@
 use bevy::{app::AppExit, prelude::*};
+use crate::SimulationState;
+
 use super::GameState;
 
 const DEFUALT_BUTTON_COLOR: Color = Color::rgb(0.15, 0.15, 0.15);
@@ -7,12 +9,15 @@ const PRESSED_BUTTON_COLOR: Color = Color::rgb(0.1, 0.1, 0.1);
 
 #[derive(Component)]
 pub enum ButtonType {
-    PlayButton,
-    QuitButton,
+    Play,
+    Quit,
+    Resume,
+    ReturnToMenu,
 }
 
 pub fn button_interactions(
-    mut next_state: ResMut<NextState<GameState>>,
+    mut next_game_state: ResMut<NextState<GameState>>,
+    mut next_sim_state: ResMut<NextState<SimulationState>>,
     mut query: Query<(&Interaction, &ButtonType, &mut BackgroundColor), Changed<Interaction>>,
     mut exit_event_writer: EventWriter<AppExit>,
 ) {
@@ -20,8 +25,13 @@ pub fn button_interactions(
         handle_background(interaction, background);
         if interaction == Interaction::Pressed {
             match *button_type {
-                ButtonType::PlayButton => next_state.set(GameState::Game),
-                ButtonType::QuitButton => exit_event_writer.send(AppExit),
+                ButtonType::Play => next_game_state.set(GameState::Game),
+                ButtonType::Quit => exit_event_writer.send(AppExit),
+                ButtonType::Resume => next_sim_state.set(SimulationState::Running),
+                ButtonType::ReturnToMenu => {
+                    next_game_state.set(GameState::MainMenu);
+                    next_sim_state.set(SimulationState::InActive);
+                },
             };
         }
     }
