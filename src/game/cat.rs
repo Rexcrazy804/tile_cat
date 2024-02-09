@@ -19,6 +19,13 @@ const CAT_BULLET_ANIMATION_DURATION: f32 = 0.12;
 const MAX_COLLISION_RADIUS: f32 = 1.5;
 const CAT_GUN_WEIGHT: f32 = 10.0; // subtracts from jump force when gun is equiped
 
+// Inputs
+const BUTTON_LEFT: [KeyCode; 2] = [KeyCode::A, KeyCode::Left];
+const BUTTON_RIGHT: [KeyCode; 2] = [KeyCode::D, KeyCode::Right];
+const BUTTON_JUMP: [KeyCode; 2] = [KeyCode::W, KeyCode::Up];
+const BUTTON_BUILD_GROUND: [KeyCode; 2] = [KeyCode::ShiftLeft, KeyCode::ShiftRight];
+
+
 #[derive(Component)]
 pub struct Cat {
     velocity: Vec3,
@@ -110,11 +117,11 @@ fn move_cat(
 ) {
     let Ok((mut transform, mut cat)) = transform_query.get_single_mut() else { return };
 
-    if keyboard_input.pressed(KeyCode::D) {
+    if keyboard_input.any_pressed(BUTTON_RIGHT) {
         cat.direction = EntityDirection::Right;
         cat.velocity.x += CAT_SPEEED;
     }
-    if keyboard_input.pressed(KeyCode::A) {
+    if keyboard_input.any_pressed(BUTTON_LEFT) {
         cat.direction = EntityDirection::Left;
         cat.velocity.x -= CAT_SPEEED;
     }
@@ -193,7 +200,7 @@ fn jump_cat(
 ) {
     let Ok(mut cat) = cat_query.get_single_mut() else { return };
 
-    if input.pressed(KeyCode::W) && cat.can_jump {
+    if input.any_pressed(BUTTON_JUMP) && cat.can_jump {
         cat.velocity.y += CAT_JUMP_FORCE;
         if cat.has_gun {
             cat.velocity.y -= CAT_GUN_WEIGHT;
@@ -271,7 +278,7 @@ fn build_ground_cat(
 ) {
     let Ok(transform) = transform_query.get_single() else { return };
 
-    if key_input.just_pressed(KeyCode::ShiftLeft) {
+    if key_input.any_just_pressed(BUTTON_BUILD_GROUND) {
         ground_build_writer.send(GroundBuildEvent(transform.translation));
     }
 }
