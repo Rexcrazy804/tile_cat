@@ -200,7 +200,7 @@ fn jump_cat(
 ) {
     let Ok(mut cat) = cat_query.get_single_mut() else { return };
 
-    if input.any_pressed(BUTTON_JUMP) && cat.can_jump {
+    if input.any_just_pressed(BUTTON_JUMP) && cat.can_jump {
         cat.velocity.y += CAT_JUMP_FORCE;
         if cat.has_gun {
             cat.velocity.y -= CAT_GUN_WEIGHT;

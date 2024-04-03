@@ -24,25 +24,26 @@ pub struct BugPlugin;
 impl Plugin for BugPlugin {
     fn build(&self, app: &mut App) {
         app
-            .insert_resource(BugSpawnTimer(Timer::from_seconds(BUG_SPAWN_RATE, TimerMode::Repeating)))
-            .insert_resource(BugAnimateTimer(Timer::from_seconds(BUG_ANIMATION_INTERVAL, TimerMode::Repeating)))
+            .insert_resource(BugSpawnTimer(repeating_timer(BUG_SPAWN_RATE)))
+            .insert_resource(BugAnimateTimer(repeating_timer(BUG_ANIMATION_INTERVAL)))
             .insert_resource(BugAtlas(Vec::new()))
 
             .add_systems(OnEnter(GameState::Game), init_bug_atlases)
             .add_systems(OnExit(GameState::Game), despawn_all_bugs)
 
-            .add_systems(Update, (
+            .add_systems( Update, (
                 move_bug,
                 spawn_bug,
                 despawn_bug,
                 animate_bug,
                 eat_bullet_bug,
-                push_down_flightless_bug.run_if(on_event::<WindowResized>()),
+
+                push_down_flightless_bug
+                    .run_if(on_event::<WindowResized>()),
             )
                 .run_if(in_state(GameState::Game))
                 .run_if(in_state(SimulationState::Running))
             )
-
         ;
     }
 }
@@ -55,6 +56,10 @@ struct BugAnimateTimer(Timer);
 
 #[derive(Resource)]
 struct BugAtlas(Vec<Handle<TextureAtlas>>);
+
+fn repeating_timer(time: f32) -> Timer {
+    Timer::from_seconds(time, TimerMode::Repeating)
+}
 
 fn init_bug_atlases(
     asset_server: Res<AssetServer>,
