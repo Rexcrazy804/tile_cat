@@ -11,7 +11,7 @@ const BUG_SPAWN_RATE: f32 = 0.84;
 const BUG_SPEED: f32 = 20.0;
 const BUG_VERTICAL_SPEED: f32 = 15.0;
 const BUG_ANIMATION_INTERVAL: f32 = 0.4;
-const BUG_VERTICAL_MOVEMENT_INTERVAL: f32 = 1.4;
+const BUG_VERTICAL_MOVEMENT_INTERVAL: std::ops::Range<f32> = (1.0)..2.0;
 const SPAWN_HORIZONTAL_PADDING: f32 = 16.0;
 
 #[derive(Component)]
@@ -132,11 +132,13 @@ fn spawn_bug(
     }
     transform.x = -(window.width() / SCALE_FACTOR) / 2.0 - BUG_SIZE / 2.0;
 
+    let vertical_interval = rand::thread_rng().gen_range(BUG_VERTICAL_MOVEMENT_INTERVAL);
+
     commands.spawn((
         bug_sprite,
         Bug,
         BugAnimateTimer(repeating_timer(BUG_ANIMATION_INTERVAL)),
-        BugVeritcalMovement(repeating_timer(BUG_VERTICAL_MOVEMENT_INTERVAL), 0.0),
+        BugVeritcalMovement(repeating_timer(vertical_interval), 0.0),
         BugCanFly(bug_selector != 2),
     ));
 }
@@ -246,6 +248,7 @@ fn confine_bug(
     }
 }
 
+// this is not similiar to the get_min_max in cat.rs
 fn get_min_max(window_limit: f32) -> (f32, f32) {
     let min = SPAWN_HORIZONTAL_PADDING - ((window_limit / 2.0) / SCALE_FACTOR);
     let max = ((window_limit / 2.0) / SCALE_FACTOR) - BUG_SIZE / 2.0;
