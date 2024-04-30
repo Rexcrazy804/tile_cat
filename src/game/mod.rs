@@ -24,6 +24,9 @@ const FRICTION: f32 = 0.8;
 #[derive(Component)]
 struct Background;
 
+#[derive(Resource)]
+pub struct Score(pub u32);
+
 pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
@@ -36,6 +39,7 @@ impl Plugin for GamePlugin {
                 FloraPlugin,
                 BugPlugin,
             ))
+            .insert_resource(Score(0))
             .add_systems(
                 OnEnter(GameState::Game),
                 (spawn_background, start_simulation),

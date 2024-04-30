@@ -2,7 +2,6 @@ use bevy::prelude::*;
 use crate::{
     GameState,
     SimulationState,
-    game::Score,
 };
 
 mod buttons;
@@ -28,17 +27,12 @@ impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_systems(OnEnter(GameState::MainMenu), spawn_mainmenu)
-            .add_systems(OnExit(GameState::MainMenu), despawn_mainmenu)
-
-            .add_systems(OnEnter(GameState::Game), spawn_scorebox)
+            .add_systems(OnExit(GameState::MainMenu), (despawn_mainmenu, spawn_scorebox))
 
             .add_systems(OnEnter(SimulationState::Paused), spawn_pausemenu)
             .add_systems(OnExit(SimulationState::Paused), despawn_pausemenu)
 
-            .add_systems(Update, (
-                button_interactions,
-                update_score,
-            ))
+            .add_systems(Update, button_interactions)
         ;
     }
 }
@@ -125,37 +119,12 @@ fn spawn_scorebox(
         height: Val::Percent(100.0),
         row_gap: Val::Px(10.0),
         column_gap: Val::Px(10.0),
-        padding: UiRect {
-            left: Val::Px(5.0),
-            right: Val::Px(5.0),
-            bottom: Val::Px(5.0),
-            top: Val::Px(5.0),
-        },
-        ..default()
-    };
-
-    let ui_box_style = Style {
-        flex_direction: FlexDirection::Column,
-        align_items: AlignItems::Center,
-        justify_content: JustifyContent::Start,
-        padding: UiRect {
-            left: Val::Px(5.0),
-            right: Val::Px(5.0),
-            bottom: Val::Px(5.0),
-            top: Val::Px(5.0),
-        },
         ..default()
     };
 
     let base = NodeBundle {
         style: menu_style,
         background_color: Color::rgba(0.988, 0.875, 0.804, 0.0).into(),
-        ..default()
-    };
-
-    let ui_box = NodeBundle {
-        style: ui_box_style,
-        background_color: Color::hsl(0.0, 0.1, 0.3).into(),
         ..default()
     };
 
@@ -166,35 +135,17 @@ fn spawn_scorebox(
     };
 
 
-    let text = TextBundle {
-        text: Text::from_sections([
-            TextSection::new(
-                "score: ",
-                text_style.clone()
-            ),
-            TextSection::new(
-                "",
-                text_style,
-            )
-        ]),
+let text = TextBundle {
+        text: Text::from_section("Score", text_style),
         ..default()
     };
 
-    let base_id = commands.spawn((
+    commands.spawn((
         base,
-    )).id();
-
-    commands.spawn(ui_box).set_parent(base_id).with_children(|parent| {
-        parent.spawn((text, ScoreBox));
+        ScoreBox
+    )).with_children(|parent| {
+        parent.spawn(text);
     });
-}
-
-fn update_score(
-    mut query: Query<&mut Text, With<ScoreBox>>,
-    score: Res<Score>
-) {
-    let Ok(mut score_text) = query.get_single_mut() else { return };
-    score_text.sections[1].value = score.0.to_string();
 }
 
 fn despawn_pausemenu (

@@ -1,5 +1,5 @@
-use bevy::{app::AppExit, prelude::*};
 use crate::SimulationState;
+use bevy::{app::AppExit, prelude::*};
 
 use super::GameState;
 
@@ -30,7 +30,7 @@ pub fn button_interactions(
                 ButtonType::Resume => next_sim_state.set(SimulationState::Running),
                 ButtonType::ReturnToMenu => {
                     next_game_state.set(GameState::MainMenu);
-                },
+                }
             };
         }
     }
@@ -44,11 +44,7 @@ fn handle_background(interaction: Interaction, mut background: Mut<'_, Backgroun
     };
 }
 
-pub fn attach_button(
-    parent: &mut ChildBuilder,
-    button_type: ButtonType,
-    button_text: &str,
-) {
+pub fn attach_button(parent: &mut ChildBuilder, button_type: ButtonType, button_text: &str) {
     let button_style = Style {
         width: Val::Percent(10.0),
         height: Val::Percent(5.0),
@@ -70,20 +66,11 @@ pub fn attach_button(
     };
 
     let text = TextBundle {
-        text: Text::from_section(
-            button_text, 
-            text_style
-        ),
+        text: Text::from_section(button_text, text_style),
         ..default()
     };
 
-    parent.spawn((
-        button,
-        button_type,
-    ))
-        .with_children(|parent| {
-            parent.spawn(text);
-        })
-    ;
+    parent.spawn((button, button_type)).with_children(|parent| {
+        parent.spawn(text);
+    });
 }
-

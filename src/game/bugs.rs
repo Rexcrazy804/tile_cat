@@ -4,7 +4,7 @@ use bevy::{
 };
 use rand::{random, Rng};
 
-use super::{bullet::Bullet, GameState, SimulationState, SCALE_FACTOR};
+use super::{bullet::Bullet, GameState, Score, SimulationState, SCALE_FACTOR};
 
 pub const BUG_SIZE: f32 = 16.0;
 const BUG_SPAWN_RATE: f32 = 0.84;
@@ -192,6 +192,7 @@ fn animate_bug(
 
 fn eat_bullet_bug(
     mut commands: Commands,
+    mut score: ResMut<Score>,
     bullet_query: Query<(&Transform, Entity), With<Bullet>>,
     bug_query: Query<(&Transform, Entity), With<Bug>>,
 ) {
@@ -204,6 +205,8 @@ fn eat_bullet_bug(
             {
                 commands.entity(bug).despawn();
                 commands.entity(bullet).despawn();
+
+                score.0 += 1;
             }
         }
     }
