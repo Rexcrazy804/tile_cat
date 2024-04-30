@@ -15,13 +15,12 @@ pub struct FloraSpawnEvent(pub Entity);
 pub struct FloraPlugin;
 impl Plugin for FloraPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_event::<FloraSpawnEvent>()
-            .add_systems(Update, 
-                spawn_flora.after(spawn_new_ground)
-                    .run_if(on_event::<FloraSpawnEvent>())
-            )
-        ;
+        app.add_event::<FloraSpawnEvent>().add_systems(
+            Update,
+            spawn_flora
+                .after(spawn_new_ground)
+                .run_if(on_event::<FloraSpawnEvent>()),
+        );
     }
 }
 
@@ -30,11 +29,8 @@ fn spawn_flora(
     mut event_reader: EventReader<FloraSpawnEvent>,
     asset_server: Res<AssetServer>,
 ) {
-
     let mut rng = rand::thread_rng();
-    let mut random_sprite = || {
-        format!("sprites/flora/flora_{}.png", rng.gen_range(1..=6))
-    };
+    let mut random_sprite = || format!("sprites/flora/flora_{}.png", rng.gen_range(1..=6));
 
     for FloraSpawnEvent(entity) in event_reader.read() {
         let mut flora_sprite = SpriteBundle {
@@ -46,10 +42,7 @@ fn spawn_flora(
         flora_sprite.transform.translation.z = -0.1;
 
         commands.entity(*entity).with_children(|parent| {
-            parent.spawn((
-                flora_sprite,
-                Flora
-            ));
+            parent.spawn((flora_sprite, Flora));
         });
     }
 }

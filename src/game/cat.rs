@@ -1,16 +1,9 @@
-use bevy::{prelude::*, window::PrimaryWindow};
 use super::{
-    GameState,
-    SimulationState,
-    EntityDirection,
-
-    SCALE_FACTOR,
-    GRAVITY,
-    FRICTION,
-
     bullet::BulletFireEvent,
-    ground::{Ground, GROUND_WIDTH, GroundBuildEvent, GROUND_HEIGHT},
+    ground::{Ground, GroundBuildEvent, GROUND_HEIGHT, GROUND_WIDTH},
+    EntityDirection, GameState, SimulationState, FRICTION, GRAVITY, SCALE_FACTOR,
 };
+use bevy::{prelude::*, window::PrimaryWindow};
 
 pub const CAT_SIZE: f32 = 16.0;
 const CAT_SPEEED: f32 = 25.0;
@@ -24,7 +17,6 @@ const BUTTON_LEFT: [KeyCode; 2] = [KeyCode::A, KeyCode::Left];
 const BUTTON_RIGHT: [KeyCode; 2] = [KeyCode::D, KeyCode::Right];
 const BUTTON_JUMP: [KeyCode; 2] = [KeyCode::W, KeyCode::Up];
 const BUTTON_BUILD_GROUND: [KeyCode; 2] = [KeyCode::ShiftLeft, KeyCode::ShiftRight];
-
 
 #[derive(Component)]
 pub struct Cat {
@@ -52,25 +44,26 @@ struct CatBulletFireTimer(Timer);
 pub struct CatPlugin;
 impl Plugin for CatPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_systems(OnEnter(GameState::Game), spawn_cat)
-            .insert_resource(CatBulletFireTimer(
-                Timer::from_seconds(CAT_BULLET_ANIMATION_DURATION, TimerMode::Once)
-            ))
-            .add_systems(Update, (
-                move_cat.before(confine_cat),
-                jump_cat,
-                confine_cat,
-                animate_cat,
-                toggle_cat_gun,
-                fire_bullet_cat,
-                build_ground_cat,
+        app.add_systems(OnEnter(GameState::Game), spawn_cat)
+            .insert_resource(CatBulletFireTimer(Timer::from_seconds(
+                CAT_BULLET_ANIMATION_DURATION,
+                TimerMode::Once,
+            )))
+            .add_systems(
+                Update,
+                (
+                    move_cat.before(confine_cat),
+                    jump_cat,
+                    confine_cat,
+                    animate_cat,
+                    toggle_cat_gun,
+                    fire_bullet_cat,
+                    build_ground_cat,
+                )
+                    .run_if(in_state(SimulationState::Running))
+                    .run_if(in_state(GameState::Game)),
             )
-                .run_if(in_state(SimulationState::Running))
-                .run_if(in_state(GameState::Game))
-            )
-            .add_systems(OnExit(GameState::Game), despawn_cat)
-        ;
+            .add_systems(OnExit(GameState::Game), despawn_cat);
     }
 }
 
@@ -78,44 +71,44 @@ fn spawn_cat(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
-) { 
+) {
     let texture_handle = asset_server.load("sprites/cat/cat_sheet_2.png");
     let atlas = TextureAtlas::from_grid(
         texture_handle,
         Vec2::new(16.0, 16.0),
         // columns, rows, padding, offset
-        5, 1, None, None
+        5,
+        1,
+        None,
+        None,
     );
 
     let atlas_handle = texture_atlases.add(atlas);
 
-    let cat_bundle = SpriteSheetBundle{
+    let cat_bundle = SpriteSheetBundle {
         texture_atlas: atlas_handle,
         sprite: TextureAtlasSprite::new(1),
         ..default()
     };
 
-    commands.spawn((
-        cat_bundle,
-        Cat::new()
-    ));
+    commands.spawn((cat_bundle, Cat::new()));
 }
 
-
-fn despawn_cat(
-    mut commands: Commands,
-    cat_query: Query<Entity, With<Cat>>
-) {
-    let Ok(entity) = cat_query.get_single() else { return };
+fn despawn_cat(mut commands: Commands, cat_query: Query<Entity, With<Cat>>) {
+    let Ok(entity) = cat_query.get_single() else {
+        return;
+    };
     commands.entity(entity).despawn();
 }
 
 fn move_cat(
     mut transform_query: Query<(&mut Transform, &mut Cat)>,
     keyboard_input: Res<Input<KeyCode>>,
-    time: Res<Time>
+    time: Res<Time>,
 ) {
-    let Ok((mut transform, mut cat)) = transform_query.get_single_mut() else { return };
+    let Ok((mut transform, mut cat)) = transform_query.get_single_mut() else {
+        return;
+    };
 
     if keyboard_input.any_pressed(BUTTON_RIGHT) {
         cat.direction = EntityDirection::Right;
@@ -129,7 +122,7 @@ fn move_cat(
     // GRAVITY
     cat.velocity.y -= GRAVITY * time.delta_seconds();
     // FRICTION
-    cat.velocity.x -= cat.velocity.x  * (1.0 - FRICTION);
+    cat.velocity.x -= cat.velocity.x * (1.0 - FRICTION);
 
     transform.translation += cat.velocity * time.delta_seconds();
 }
@@ -138,10 +131,14 @@ fn confine_cat(
     mut transform_query: Query<(&mut Transform, &mut Cat), Without<Ground>>,
     ground_query: Query<&Transform, With<Ground>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
-    time: Res<Time>
+    time: Res<Time>,
 ) {
-    let Ok(window) = window_query.get_single() else { return };
-    let Ok((mut cat_transform, mut cat)) = transform_query.get_single_mut() else { return };
+    let Ok(window) = window_query.get_single() else {
+        return;
+    };
+    let Ok((mut cat_transform, mut cat)) = transform_query.get_single_mut() else {
+        return;
+    };
 
     // println!("{:?}", (window.height(), window.width()));
     // window default: 1280, 720
@@ -170,13 +167,19 @@ fn confine_cat(
     // ground_collision
     for ground_transfrom in &ground_query {
         let mut ground_top = ground_transfrom.translation;
-        ground_top.y += GROUND_WIDTH/2.0;
+        ground_top.y += GROUND_WIDTH / 2.0;
 
         let mut cat_bottom = cat_transform.translation;
-        cat_bottom.y -= CAT_SIZE/2.0;
+        cat_bottom.y -= CAT_SIZE / 2.0;
 
-        if !(cat_bottom.x + CAT_SIZE/2.0 >= ground_top.x - (GROUND_WIDTH/2.0) && cat_bottom.x - CAT_SIZE <= ground_top.x + (GROUND_WIDTH/2.0)) { continue }
-        if cat_bottom.distance(ground_top) > GROUND_HEIGHT * MAX_COLLISION_RADIUS { continue }
+        if !(cat_bottom.x + CAT_SIZE / 2.0 >= ground_top.x - (GROUND_WIDTH / 2.0)
+            && cat_bottom.x - CAT_SIZE <= ground_top.x + (GROUND_WIDTH / 2.0))
+        {
+            continue;
+        }
+        if cat_bottom.distance(ground_top) > GROUND_HEIGHT * MAX_COLLISION_RADIUS {
+            continue;
+        }
 
         let ground_limit = ground_transfrom.translation.y + GROUND_WIDTH;
 
@@ -189,16 +192,15 @@ fn confine_cat(
 }
 
 fn get_min_max(window_limit: f32) -> (f32, f32) {
-    let min = CAT_SIZE/2.0 - ((window_limit/2.0) / SCALE_FACTOR);
-    let max = ((window_limit/2.0)/ SCALE_FACTOR) - CAT_SIZE/2.0;
+    let min = CAT_SIZE / 2.0 - ((window_limit / 2.0) / SCALE_FACTOR);
+    let max = ((window_limit / 2.0) / SCALE_FACTOR) - CAT_SIZE / 2.0;
     (min, max)
 }
 
-fn jump_cat(
-    mut cat_query: Query<&mut Cat>,
-    input: Res<Input<KeyCode>>,
-) {
-    let Ok(mut cat) = cat_query.get_single_mut() else { return };
+fn jump_cat(mut cat_query: Query<&mut Cat>, input: Res<Input<KeyCode>>) {
+    let Ok(mut cat) = cat_query.get_single_mut() else {
+        return;
+    };
 
     if input.any_just_pressed(BUTTON_JUMP) && cat.can_jump {
         cat.velocity.y += CAT_JUMP_FORCE;
@@ -209,17 +211,15 @@ fn jump_cat(
     }
 }
 
-fn animate_cat(
-    mut transform_query: Query<(&mut Transform, &Cat, &mut TextureAtlasSprite)>,
-) {
-    let Ok((mut transform, cat, mut sprite)) = transform_query.get_single_mut() else { return };
+fn animate_cat(mut transform_query: Query<(&mut Transform, &Cat, &mut TextureAtlasSprite)>) {
+    let Ok((mut transform, cat, mut sprite)) = transform_query.get_single_mut() else {
+        return;
+    };
 
     match cat.direction {
-        EntityDirection::Left => 
-            transform.rotation = Quat::from_rotation_y(std::f32::consts::PI),
+        EntityDirection::Left => transform.rotation = Quat::from_rotation_y(std::f32::consts::PI),
 
-        EntityDirection::Right => 
-            transform.rotation = Quat::default(),
+        EntityDirection::Right => transform.rotation = Quat::default(),
     }
 
     if cat.can_jump {
@@ -233,14 +233,13 @@ fn animate_cat(
     }
 }
 
-
-
-fn toggle_cat_gun(
-    mut cat_query: Query<&mut Cat>,
-    key_input: Res<Input<KeyCode>>,
-) {
-    if !key_input.just_pressed(KeyCode::F) { return }
-    let Ok(mut cat) = cat_query.get_single_mut() else { return };
+fn toggle_cat_gun(mut cat_query: Query<&mut Cat>, key_input: Res<Input<KeyCode>>) {
+    if !key_input.just_pressed(KeyCode::F) {
+        return;
+    }
+    let Ok(mut cat) = cat_query.get_single_mut() else {
+        return;
+    };
 
     cat.has_gun = !cat.has_gun
 }
@@ -252,9 +251,13 @@ fn fire_bullet_cat(
     key_input: Res<Input<KeyCode>>,
     time: Res<Time>,
 ) {
-    let Ok(mut cat) = cat_query.get_single_mut() else { return };
+    let Ok(mut cat) = cat_query.get_single_mut() else {
+        return;
+    };
 
-    if !cat.has_gun { return }
+    if !cat.has_gun {
+        return;
+    }
 
     if anim_time.0.tick(time.delta()).just_finished() {
         cat.is_firing = false;
@@ -276,7 +279,9 @@ fn build_ground_cat(
     mut ground_build_writer: EventWriter<GroundBuildEvent>,
     transform_query: Query<&Transform, With<Cat>>,
 ) {
-    let Ok(transform) = transform_query.get_single() else { return };
+    let Ok(transform) = transform_query.get_single() else {
+        return;
+    };
 
     if key_input.any_just_pressed(BUTTON_BUILD_GROUND) {
         ground_build_writer.send(GroundBuildEvent(transform.translation));

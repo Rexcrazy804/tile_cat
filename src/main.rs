@@ -1,4 +1,4 @@
-use bevy::{prelude::*, app::AppExit};
+use bevy::{app::AppExit, prelude::*};
 
 mod game;
 mod menu;
@@ -30,8 +30,7 @@ fn main() {
         .add_state::<GameState>()
         .add_systems(Startup, spawn_camera)
         .add_systems(Update, exit_handler)
-        .run()
-    ;
+        .run();
 }
 
 #[derive(States, Default, Clone, Copy, Debug, Hash, Eq, PartialEq)]
@@ -46,24 +45,17 @@ pub enum SimulationState {
     #[default]
     InActive,
     Running,
-    Paused
+    Paused,
 }
 
-fn spawn_camera(
-    mut commands: Commands,
-) {
+fn spawn_camera(mut commands: Commands) {
     let mut camera_bundle = Camera2dBundle::default();
     camera_bundle.projection.scale /= SCALE_FACTOR;
 
-    commands.spawn(
-        camera_bundle
-    );
+    commands.spawn(camera_bundle);
 }
 
-fn exit_handler(
-    key_input: Res<Input<KeyCode>>,
-    mut exit_event_writer: EventWriter<AppExit>,
-) {
+fn exit_handler(key_input: Res<Input<KeyCode>>, mut exit_event_writer: EventWriter<AppExit>) {
     if key_input.pressed(KeyCode::ShiftLeft) && key_input.pressed(KeyCode::Q) {
         exit_event_writer.send(AppExit)
     }

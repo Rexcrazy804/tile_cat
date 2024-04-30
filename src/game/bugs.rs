@@ -4,7 +4,7 @@ use bevy::{
 };
 use rand::{random, Rng};
 
-use super::{bullet::Bullet, ground::GROUND_HEIGHT, GameState, SimulationState, SCALE_FACTOR};
+use super::{bullet::Bullet, GameState, SimulationState, SCALE_FACTOR};
 
 pub const BUG_SIZE: f32 = 16.0;
 const BUG_SPAWN_RATE: f32 = 0.84;
@@ -39,8 +39,7 @@ fn repeating_timer(time: f32) -> Timer {
 pub struct BugPlugin;
 impl Plugin for BugPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .insert_resource(BugSpawnTimer(repeating_timer(BUG_SPAWN_RATE)))
+        app.insert_resource(BugSpawnTimer(repeating_timer(BUG_SPAWN_RATE)))
             .insert_resource(BugAtlas(Vec::new()))
             .add_systems(OnEnter(GameState::Game), init_bug_atlases)
             .add_systems(OnExit(GameState::Game), despawn_all_bugs)
