@@ -8,39 +8,39 @@
       "x86_64-linux"
       "aarch64-linux"
     ] (system: function nixpkgs.legacyPackages.${system});
+
   in {
     devShells = forAllSystems (pkgs: {
-      default = with pkgs; mkShell {
+      default = with pkgs; mkShell rec {
         shellHook = ''
           exec $SHELL
         '';
 
         RUST_SRC_PATH = rustPlatform.rustLibSrc;
-        RUST_BACKTACE = 1;
-
-        LD_LIBRARY_PATH = "$LD_LIBRARY_PATH: ${lib.makeLibraryPath[
-          udev
-          alsaLib
-          vulkan-loader
-        ]}";
+        RUST_BACKTRACE = 1;
+        WINIT_UNIX_BACKEND = "wayland";
 
         nativeBuildInputs = [ clang pkg-config ];
+
+        bevyDependencies = [
+            alsa-lib
+            libudev-zero
+            vulkan-loader 
+            libxkbcommon
+            wayland
+        ];
+
         buildInputs = [
           cargo
           rustc
           rustfmt
           pre-commit
           rustPackages.clippy
-          alsa-lib
-          libudev-zero
-          vulkan-loader 
+          rust-analyzer
+        ] ++ bevyDependencies;
 
-          #NOTE Add more deps
-          xorg.libX11
-          xorg.libXrandr
-          xorg.libXcursor
-          xorg.libXi
-        ];
+        # Required for Bevy LD
+        LD_LIBRARY_PATH = lib.makeLibraryPath bevyDependencies;
       };
     });
   };
