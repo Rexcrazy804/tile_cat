@@ -22,6 +22,8 @@ struct PauseMenu;
 
 #[derive(Component)]
 struct ScoreBox;
+#[derive(Component)]
+struct ScoreText;
 
 pub struct MainMenuPlugin;
 impl Plugin for MainMenuPlugin {
@@ -31,6 +33,7 @@ impl Plugin for MainMenuPlugin {
             .add_systems(OnExit(GameState::MainMenu), despawn_mainmenu)
 
             .add_systems(OnEnter(GameState::Game), spawn_scorebox)
+            .add_systems(OnExit(GameState::Game), despawn_scorebox)
 
             .add_systems(OnEnter(SimulationState::Paused), spawn_pausemenu)
             .add_systems(OnExit(SimulationState::Paused), despawn_pausemenu)
@@ -140,7 +143,7 @@ fn spawn_scorebox(
         justify_content: JustifyContent::Start,
         padding: UiRect {
             left: Val::Px(5.0),
-            right: Val::Px(5.0),
+            right: Val::Px(10.0),
             bottom: Val::Px(5.0),
             top: Val::Px(5.0),
         },
@@ -182,15 +185,16 @@ fn spawn_scorebox(
 
     let base_id = commands.spawn((
         base,
+        ScoreBox,
     )).id();
 
     commands.spawn(ui_box).set_parent(base_id).with_children(|parent| {
-        parent.spawn((text, ScoreBox));
+        parent.spawn((text, ScoreText));
     });
 }
 
 fn update_score(
-    mut query: Query<&mut Text, With<ScoreBox>>,
+    mut query: Query<&mut Text, With<ScoreText>>,
     score: Res<Score>
 ) {
     let Ok(mut score_text) = query.get_single_mut() else { return };
@@ -202,5 +206,13 @@ fn despawn_pausemenu (
     query: Query<Entity, With<PauseMenu>>,
 ) {
     let Ok(entity) = query.get_single() else { warn!("No menu Entity"); return };
+    commands.entity(entity).despawn_recursive();
+}
+
+fn despawn_scorebox (
+    mut commands: Commands,
+    query: Query<Entity, With<ScoreBox>>
+) {
+    let Ok(entity) = query.get_single() else { return };
     commands.entity(entity).despawn_recursive();
 }

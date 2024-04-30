@@ -46,7 +46,7 @@ impl Plugin for GamePlugin {
             )
             .add_systems(
                 OnExit(GameState::Game),
-                (despawn_background, stop_simulation),
+                (despawn_background, stop_simulation, reset_score),
             )
             .add_systems(
                 Update,
@@ -124,4 +124,10 @@ fn toggle_simulation(
         SimulationState::Paused => next_state.set(SimulationState::Running),
         SimulationState::InActive => (),
     }
+}
+
+fn reset_score(
+    mut score: ResMut<Score>
+) {
+    score.0 = 0;
 }
