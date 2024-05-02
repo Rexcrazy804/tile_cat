@@ -18,6 +18,7 @@ use clouds::CloudPlugin;
 use flora::FloraPlugin;
 use ground::GroundPlugin;
 
+pub const INITIAL_HEART_COUNT: u8 = 3;
 const GRAVITY: f32 = 200.8;
 const FRICTION: f32 = 0.8;
 
@@ -26,6 +27,9 @@ struct Background;
 
 #[derive(Resource)]
 pub struct Score(pub u32);
+
+#[derive(Resource)]
+pub struct Heart(pub u8);
 
 pub struct GamePlugin;
 impl Plugin for GamePlugin {
@@ -40,6 +44,7 @@ impl Plugin for GamePlugin {
                 BugPlugin,
             ))
             .insert_resource(Score(0))
+            .insert_resource(Heart(INITIAL_HEART_COUNT))
             .add_systems(
                 OnEnter(GameState::Game),
                 (spawn_background, start_simulation),

@@ -1,4 +1,4 @@
-use crate::{game::Score, GameState, SimulationState};
+use crate::{game::{Score, Heart, INITIAL_HEART_COUNT}, GameState, SimulationState};
 use bevy::prelude::*;
 
 mod buttons;
@@ -12,17 +12,21 @@ struct MainMenu;
 struct PauseMenu;
 
 #[derive(Component)]
-struct ScoreBox;
+struct StatsBar;
+
 #[derive(Component)]
 struct ScoreText;
+
+#[derive(Component)]
+struct HeartText;
 
 pub struct MainMenuPlugin;
 impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::MainMenu), spawn_mainmenu)
             .add_systems(OnExit(GameState::MainMenu), despawn_mainmenu)
-            .add_systems(OnEnter(GameState::Game), spawn_scorebox)
-            .add_systems(OnExit(GameState::Game), despawn_scorebox)
+            .add_systems(OnEnter(GameState::Game), spawn_statsbar)
+            .add_systems(OnExit(GameState::Game), despawn_statsbar)
             .add_systems(OnEnter(SimulationState::Paused), spawn_pausemenu)
             .add_systems(OnExit(SimulationState::Paused), despawn_pausemenu)
 
@@ -31,6 +35,7 @@ impl Plugin for MainMenuPlugin {
                 (
                     button_interactions,
                     update_score.run_if(resource_changed::<Score>()),
+                    update_heart.run_if(resource_changed::<Heart>())
                 ),
             );
     }
@@ -93,11 +98,11 @@ fn spawn_pausemenu(mut commands: Commands) {
     });
 }
 
-fn spawn_scorebox(mut commands: Commands) {
-    let base_style = Style {
-        flex_direction: FlexDirection::Column,
+fn spawn_statsbar(mut commands: Commands) {
+    let bar_style = Style {
+        flex_direction: FlexDirection::Row,
         align_items: AlignItems::Start,
-        justify_content: JustifyContent::Start,
+        justify_content: JustifyContent::SpaceBetween,
         width: Val::Percent(100.0),
         height: Val::Percent(100.0),
         row_gap: Val::Px(10.0),
@@ -111,8 +116,8 @@ fn spawn_scorebox(mut commands: Commands) {
         ..default()
     };
 
-    let scorebox_style = Style {
-        flex_direction: FlexDirection::Column,
+    let box_style = Style {
+        flex_direction: FlexDirection::Row,
         align_items: AlignItems::Center,
         justify_content: JustifyContent::Start,
         padding: UiRect {
@@ -130,10 +135,18 @@ fn spawn_scorebox(mut commands: Commands) {
         ..default()
     };
 
-    let text = TextBundle {
+    let score_text = TextBundle {
         text: Text::from_sections([
             TextSection::new("score: ", text_style.clone()),
-            TextSection::new("0", text_style),
+            TextSection::new("0", text_style.clone()),
+        ]),
+        ..default()
+    };
+
+    let heart_text = TextBundle {
+        text: Text::from_sections([
+            TextSection::new("Hearts: ", text_style.clone()),
+            TextSection::new(INITIAL_HEART_COUNT.to_string(), text_style.clone()),
         ]),
         ..default()
     };
@@ -141,21 +154,30 @@ fn spawn_scorebox(mut commands: Commands) {
     commands
         .spawn((
             NodeBundle {
-                style: base_style,
+                style: bar_style,
                 background_color: Color::rgba(0.988, 0.875, 0.804, 0.0).into(),
                 ..default()
             },
-            ScoreBox,
+            StatsBar,
         ))
         .with_children(|parent| {
             parent
                 .spawn(NodeBundle {
-                    style: scorebox_style,
+                    style: box_style.clone(),
                     background_color: Color::hsl(0.0, 0.1, 0.3).into(),
                     ..default()
                 })
                 .with_children(|parent| {
-                    parent.spawn((text, ScoreText));
+                    parent.spawn((score_text, ScoreText));
+                });
+            parent
+                .spawn(NodeBundle {
+                    style: box_style,
+                    background_color: Color::hsl(0.0, 0.1, 0.3).into(),
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn((heart_text, HeartText));
                 });
         });
 }
@@ -167,6 +189,13 @@ fn update_score(mut query: Query<&mut Text, With<ScoreText>>, score: Res<Score>)
     score_text.sections[1].value = score.0.to_string();
 }
 
+fn update_heart(mut query: Query<&mut Text, With<HeartText>>, heart: Res<Heart>) {
+    let Ok(mut heart_text) = query.get_single_mut() else {
+        return;
+    };
+    heart_text.sections[1].value = heart.0.to_string();
+}
+
 fn despawn_pausemenu(mut commands: Commands, query: Query<Entity, With<PauseMenu>>) {
     let Ok(entity) = query.get_single() else {
         warn!("No menu Entity");
@@ -175,7 +204,7 @@ fn despawn_pausemenu(mut commands: Commands, query: Query<Entity, With<PauseMenu
     commands.entity(entity).despawn_recursive();
 }
 
-fn despawn_scorebox(mut commands: Commands, query: Query<Entity, With<ScoreBox>>) {
+fn despawn_statsbar(mut commands: Commands, query: Query<Entity, With<StatsBar>>) {
     let Ok(entity) = query.get_single() else {
         return;
     };
