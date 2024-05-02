@@ -25,7 +25,14 @@ impl Plugin for MainMenuPlugin {
             .add_systems(OnExit(GameState::Game), despawn_scorebox)
             .add_systems(OnEnter(SimulationState::Paused), spawn_pausemenu)
             .add_systems(OnExit(SimulationState::Paused), despawn_pausemenu)
-            .add_systems(Update, (button_interactions, update_score));
+
+            .add_systems(
+                Update,
+                (
+                    button_interactions,
+                    update_score.run_if(resource_changed::<Score>()),
+                ),
+            );
     }
 }
 
@@ -126,7 +133,7 @@ fn spawn_scorebox(mut commands: Commands) {
     let text = TextBundle {
         text: Text::from_sections([
             TextSection::new("score: ", text_style.clone()),
-            TextSection::new("", text_style),
+            TextSection::new("0", text_style),
         ]),
         ..default()
     };
