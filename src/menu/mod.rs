@@ -1,4 +1,4 @@
-use crate::{game::{Score, Heart, INITIAL_HEART_COUNT}, GameState, SimulationState};
+use crate::{game::{reset_heart, reset_score, Heart, Score, INITIAL_HEART_COUNT}, GameState, SimulationState};
 use bevy::prelude::*;
 
 mod buttons;
@@ -10,6 +10,9 @@ struct MainMenu;
 
 #[derive(Component)]
 struct PauseMenu;
+
+#[derive(Component)]
+struct GameOverMenu;
 
 #[derive(Component)]
 struct StatsBar;
@@ -25,10 +28,15 @@ impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::MainMenu), spawn_mainmenu)
             .add_systems(OnExit(GameState::MainMenu), despawn_mainmenu)
+
             .add_systems(OnEnter(GameState::Game), spawn_statsbar)
             .add_systems(OnExit(GameState::Game), despawn_statsbar)
+
             .add_systems(OnEnter(SimulationState::Paused), spawn_pausemenu)
             .add_systems(OnExit(SimulationState::Paused), despawn_pausemenu)
+
+            .add_systems(OnEnter(GameState::GameOver), spawn_gameovermenu)
+            .add_systems(OnExit(GameState::GameOver), (despawn_gameovermenu, reset_score, reset_heart))
 
             .add_systems(
                 Update,
@@ -182,6 +190,45 @@ fn spawn_statsbar(mut commands: Commands) {
         });
 }
 
+fn spawn_gameovermenu(
+    mut commands: Commands,
+    score: Res<Score>,
+) {
+    let menu_style = Style {
+        flex_direction: FlexDirection::Column,
+        align_items: AlignItems::Center,
+        justify_content: JustifyContent::Center,
+        width: Val::Percent(100.0),
+        height: Val::Percent(100.0),
+        row_gap: Val::Px(10.0),
+        column_gap: Val::Px(10.0),
+        ..default()
+    };
+
+    let text_style = TextStyle {
+        font_size: 14.0,
+        color: Color::WHITE,
+        ..default()
+    };
+
+    let base = NodeBundle {
+        style: menu_style,
+        background_color: Color::rgba(0.988, 0.875, 0.804, 0.0).into(),
+        ..default()
+    };
+
+    commands.spawn((base, GameOverMenu)).with_children(|parent| {
+        parent.spawn(
+            TextBundle {
+                text: Text::from_section(format!("Score: {}", score.0), text_style),
+                ..default()
+            }
+        );
+        attach_button(parent, ButtonType::ReturnToMenu, "Main Menu");
+        attach_button(parent, ButtonType::Quit, "Quit");
+    });
+}
+
 fn update_score(mut query: Query<&mut Text, With<ScoreText>>, score: Res<Score>) {
     let Ok(mut score_text) = query.get_single_mut() else {
         return;
@@ -198,7 +245,13 @@ fn update_heart(mut query: Query<&mut Text, With<HeartText>>, heart: Res<Heart>)
 
 fn despawn_pausemenu(mut commands: Commands, query: Query<Entity, With<PauseMenu>>) {
     let Ok(entity) = query.get_single() else {
-        warn!("No menu Entity");
+        return;
+    };
+    commands.entity(entity).despawn_recursive();
+}
+
+fn despawn_gameovermenu(mut commands: Commands, query: Query<Entity, With<GameOverMenu>>) {
+    let Ok(entity) = query.get_single() else {
         return;
     };
     commands.entity(entity).despawn_recursive();

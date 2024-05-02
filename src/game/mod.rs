@@ -51,11 +51,16 @@ impl Plugin for GamePlugin {
             )
             .add_systems(
                 OnExit(GameState::Game),
-                (despawn_background, stop_simulation, reset_score),
+                (despawn_background, stop_simulation),
             )
             .add_systems(
                 Update,
-                (toggle_simulation, resize_bacground).run_if(in_state(GameState::Game)),
+                (
+                    toggle_simulation,
+                    resize_bacground,
+                    game_over.run_if(resource_changed::<Heart>()),
+                )
+                    .run_if(in_state(GameState::Game)),
             );
     }
 }
@@ -131,8 +136,23 @@ fn toggle_simulation(
     }
 }
 
-fn reset_score(
-    mut score: ResMut<Score>
-) {
+pub fn reset_score(mut score: ResMut<Score>) {
     score.0 = 0;
+}
+
+pub fn reset_heart(mut hearts: ResMut<Heart>) {
+    hearts.0 = INITIAL_HEART_COUNT;
+}
+
+fn game_over(
+    mut simulation_state: ResMut<NextState<SimulationState>>,
+    mut game_state: ResMut<NextState<GameState>>,
+    hearts: Res<Heart>,
+) {
+    if hearts.0 > 0 {
+        return;
+    }
+
+    simulation_state.set(SimulationState::InActive);
+    game_state.set(GameState::GameOver);
 }

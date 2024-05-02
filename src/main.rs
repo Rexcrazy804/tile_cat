@@ -8,6 +8,22 @@ use menu::MainMenuPlugin;
 
 pub const SCALE_FACTOR: f32 = 4.0;
 
+#[derive(States, Default, Clone, Copy, Debug, Hash, Eq, PartialEq)]
+pub enum GameState {
+    #[default]
+    MainMenu,
+    Game,
+    GameOver,
+}
+
+#[derive(States, Default, Clone, Copy, Debug, Hash, Eq, PartialEq)]
+pub enum SimulationState {
+    #[default]
+    InActive,
+    Running,
+    Paused,
+}
+
 fn main() {
     let custom_window = WindowPlugin {
         primary_window: Some(Window {
@@ -33,20 +49,6 @@ fn main() {
         .run();
 }
 
-#[derive(States, Default, Clone, Copy, Debug, Hash, Eq, PartialEq)]
-pub enum GameState {
-    #[default]
-    MainMenu,
-    Game,
-}
-
-#[derive(States, Default, Clone, Copy, Debug, Hash, Eq, PartialEq)]
-pub enum SimulationState {
-    #[default]
-    InActive,
-    Running,
-    Paused,
-}
 
 fn spawn_camera(mut commands: Commands) {
     let mut camera_bundle = Camera2dBundle::default();
