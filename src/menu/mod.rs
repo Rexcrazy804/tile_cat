@@ -206,7 +206,7 @@ fn spawn_gameovermenu(
     };
 
     let text_style = TextStyle {
-        font_size: 14.0,
+        font_size: 20.0,
         color: Color::WHITE,
         ..default()
     };
