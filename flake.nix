@@ -35,7 +35,9 @@
     });
 
     devShells = forAllSystems (pkgs: {
-      default = pkgs.mkShell rec {
+      default = pkgs.mkShell.override {
+        stdenv = pkgs.stdenvAdapters.useMoldLinker pkgs.clangStdenv;
+      } rec {
         shellHook = ''
           exec $SHELL
         '';
@@ -43,7 +45,6 @@
         RUST_BACKTRACE = 1;
 
         nativeBuildInputs = with pkgs; [
-          clang
           (rust-bin.nightly.latest.default.override {
             targets = ["wasm32-unknown-unknown"];
           })
