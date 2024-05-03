@@ -1,47 +1,57 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    rust-overlay.url = "github:oxalica/rust-overlay";
   };
 
-  outputs = { self, nixpkgs, ... }: let
-    forAllSystems = function: nixpkgs.lib.genAttrs [
-      "x86_64-linux"
-      "aarch64-linux"
-    ] (system: function nixpkgs.legacyPackages.${system});
-
+  outputs = {
+    self,
+    nixpkgs,
+    rust-overlay,
+    ...
+  }: let
+    forAllSystems = function:
+      nixpkgs.lib.genAttrs [
+        "x86_64-linux"
+        "aarch64-linux"
+      ] (system: 
+        function 
+          (import nixpkgs { 
+            inherit system;
+            overlays = [ rust-overlay.overlays.default ];
+          })
+      );
   in {
+    formatter = forAllSystems (pkgs: pkgs.alejandra);
     devShells = forAllSystems (pkgs: {
-      default = with pkgs; mkShell rec {
-        shellHook = ''
-          exec $SHELL
-        '';
+      default = pkgs.mkShell rec {
+          shellHook = ''
+            exec $SHELL
+          '';
 
-        RUST_SRC_PATH = rustPlatform.rustLibSrc;
-        RUST_BACKTRACE = 1;
-        WINIT_UNIX_BACKEND = "wayland";
+          RUST_BACKTRACE = 1;
 
-        nativeBuildInputs = [ clang pkg-config ];
+          nativeBuildInputs = with pkgs; [
+            clang
+            (rust-bin.nightly.latest.default.override {
+              targets = [ "wasm32-unknown-unknown" ];
+            })
+          ];
 
-        bevyDependencies = [
+          buildInputs = with pkgs; [
+            pkg-config
             alsa-lib
             libudev-zero
-            vulkan-loader 
+            vulkan-loader
             libxkbcommon
             wayland
-        ];
+          ];
 
-        buildInputs = [
-          cargo
-          rustc
-          rustfmt
-          pre-commit
-          rustPackages.clippy
-          rust-analyzer
-        ] ++ bevyDependencies;
+          packages = [ pkgs.rust-analyzer ];
 
-        # Required for Bevy LD
-        LD_LIBRARY_PATH = lib.makeLibraryPath bevyDependencies;
-      };
+          # Required for Bevy LD
+          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath buildInputs;
+        };
     });
   };
 }
