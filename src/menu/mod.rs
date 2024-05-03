@@ -1,4 +1,7 @@
-use crate::{game::{reset_stats, Heart, Score, INITIAL_HEART_COUNT}, GameState, SimulationState};
+use crate::{
+    game::{reset_stats, Heart, Score, INITIAL_HEART_COUNT},
+    GameState, SimulationState,
+};
 use bevy::prelude::*;
 
 mod buttons;
@@ -28,22 +31,18 @@ impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::MainMenu), (spawn_mainmenu, reset_stats))
             .add_systems(OnExit(GameState::MainMenu), despawn_mainmenu)
-
             .add_systems(OnEnter(GameState::Game), spawn_statsbar)
             .add_systems(OnExit(GameState::Game), despawn_statsbar)
-
             .add_systems(OnEnter(SimulationState::Paused), spawn_pausemenu)
             .add_systems(OnExit(SimulationState::Paused), despawn_pausemenu)
-
             .add_systems(OnEnter(GameState::GameOver), spawn_gameovermenu)
             .add_systems(OnExit(GameState::GameOver), despawn_gameovermenu)
-
             .add_systems(
                 Update,
                 (
                     button_interactions,
                     update_score.run_if(resource_changed::<Score>()),
-                    update_heart.run_if(resource_changed::<Heart>())
+                    update_heart.run_if(resource_changed::<Heart>()),
                 ),
             );
     }
@@ -190,10 +189,7 @@ fn spawn_statsbar(mut commands: Commands) {
         });
 }
 
-fn spawn_gameovermenu(
-    mut commands: Commands,
-    score: Res<Score>,
-) {
+fn spawn_gameovermenu(mut commands: Commands, score: Res<Score>) {
     let menu_style = Style {
         flex_direction: FlexDirection::Column,
         align_items: AlignItems::Center,
@@ -217,16 +213,16 @@ fn spawn_gameovermenu(
         ..default()
     };
 
-    commands.spawn((base, GameOverMenu)).with_children(|parent| {
-        parent.spawn(
-            TextBundle {
+    commands
+        .spawn((base, GameOverMenu))
+        .with_children(|parent| {
+            parent.spawn(TextBundle {
                 text: Text::from_section(format!("Score: {}", score.0), text_style),
                 ..default()
-            }
-        );
-        attach_button(parent, ButtonType::ReturnToMenu, "Main Menu");
-        attach_button(parent, ButtonType::Quit, "Quit");
-    });
+            });
+            attach_button(parent, ButtonType::ReturnToMenu, "Main Menu");
+            attach_button(parent, ButtonType::Quit, "Quit");
+        });
 }
 
 fn update_score(mut query: Query<&mut Text, With<ScoreText>>, score: Res<Score>) {

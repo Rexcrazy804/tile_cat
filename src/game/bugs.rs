@@ -4,7 +4,9 @@ use bevy::{
 };
 use rand::{random, Rng};
 
-use super::{bullet::Bullet, DifficultyMultiplier, GameState, Heart, Score, SimulationState, SCALE_FACTOR};
+use super::{
+    bullet::Bullet, DifficultyMultiplier, GameState, Heart, Score, SimulationState, SCALE_FACTOR,
+};
 
 pub const BUG_SIZE: f32 = 16.0;
 const BUG_SPAWN_RATE: f32 = 0.84;
@@ -153,7 +155,8 @@ fn move_bug(
         if movement.0.tick(time.delta()).just_finished() && can_fly.0 {
             movement.1 = rng.gen_range(-1..=1) as f32;
         }
-        bug_transform.translation.y += movement.1 * BUG_VERTICAL_SPEED * time.delta_seconds() * diff_mult.0;
+        bug_transform.translation.y +=
+            movement.1 * BUG_VERTICAL_SPEED * time.delta_seconds() * diff_mult.0;
         bug_transform.translation.x += BUG_SPEED * time.delta_seconds() * diff_mult.0;
     }
 }
@@ -171,7 +174,9 @@ fn despawn_bug(
     for (transform, entity) in &transform_query {
         if transform.translation.x - (BUG_SIZE / 2.0) > (window.width() / 2.0) / SCALE_FACTOR {
             commands.entity(entity).despawn();
-            if hearts.0 > 0 { hearts.0 -= 1 }
+            if hearts.0 > 0 {
+                hearts.0 -= 1
+            }
         }
     }
 }

@@ -47,11 +47,9 @@ impl Plugin for GamePlugin {
                 FloraPlugin,
                 BugPlugin,
             ))
-
             .insert_resource(Score(0))
             .insert_resource(Heart(INITIAL_HEART_COUNT))
             .insert_resource(DifficultyMultiplier(1.0))
-
             .add_systems(
                 OnEnter(GameState::Game),
                 (spawn_background, start_simulation),
@@ -66,7 +64,7 @@ impl Plugin for GamePlugin {
                     toggle_simulation,
                     resize_bacground,
                     game_over.run_if(resource_changed::<Heart>()),
-                    step_difficulty.run_if(resource_changed::<Score>())
+                    step_difficulty.run_if(resource_changed::<Score>()),
                 )
                     .run_if(in_state(GameState::Game)),
             );
@@ -154,11 +152,8 @@ pub fn reset_stats(
     diffculty.0 = 1.0;
 }
 
-fn step_difficulty(
-    mut diffculty: ResMut<DifficultyMultiplier>,
-    score: Res<Score>,
-) {
-    diffculty.0 = 1.0 + ((score.0/100) as f32 * DIFFICULTY_STEP);
+fn step_difficulty(mut diffculty: ResMut<DifficultyMultiplier>, score: Res<Score>) {
+    diffculty.0 = 1.0 + ((score.0 / 100) as f32 * DIFFICULTY_STEP);
 }
 
 fn game_over(

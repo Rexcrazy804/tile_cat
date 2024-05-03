@@ -49,7 +49,6 @@ fn main() {
         .run();
 }
 
-
 fn spawn_camera(mut commands: Commands) {
     let mut camera_bundle = Camera2dBundle::default();
     camera_bundle.projection.scale /= SCALE_FACTOR;
