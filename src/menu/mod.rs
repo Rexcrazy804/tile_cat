@@ -26,7 +26,7 @@ struct HeartText;
 pub struct MainMenuPlugin;
 impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::MainMenu), spawn_mainmenu)
+        app.add_systems(OnEnter(GameState::MainMenu), (spawn_mainmenu, reset_stats))
             .add_systems(OnExit(GameState::MainMenu), despawn_mainmenu)
 
             .add_systems(OnEnter(GameState::Game), spawn_statsbar)
@@ -36,7 +36,7 @@ impl Plugin for MainMenuPlugin {
             .add_systems(OnExit(SimulationState::Paused), despawn_pausemenu)
 
             .add_systems(OnEnter(GameState::GameOver), spawn_gameovermenu)
-            .add_systems(OnExit(GameState::GameOver), (despawn_gameovermenu, reset_stats))
+            .add_systems(OnExit(GameState::GameOver), despawn_gameovermenu)
 
             .add_systems(
                 Update,
