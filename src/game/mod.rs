@@ -31,6 +31,9 @@ pub struct Score(pub u32);
 #[derive(Resource)]
 pub struct Heart(pub u8);
 
+#[derive(Resource)]
+pub struct DifficultyMultiplier(f32);
+
 pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
@@ -43,8 +46,11 @@ impl Plugin for GamePlugin {
                 FloraPlugin,
                 BugPlugin,
             ))
+
             .insert_resource(Score(0))
             .insert_resource(Heart(INITIAL_HEART_COUNT))
+            .insert_resource(DifficultyMultiplier(1.0))
+
             .add_systems(
                 OnEnter(GameState::Game),
                 (spawn_background, start_simulation),
@@ -59,6 +65,7 @@ impl Plugin for GamePlugin {
                     toggle_simulation,
                     resize_bacground,
                     game_over.run_if(resource_changed::<Heart>()),
+                    step_difficulty.run_if(resource_changed::<Score>())
                 )
                     .run_if(in_state(GameState::Game)),
             );
@@ -136,12 +143,21 @@ fn toggle_simulation(
     }
 }
 
-pub fn reset_score(mut score: ResMut<Score>) {
+pub fn reset_stats(
+    mut score: ResMut<Score>,
+    mut hearts: ResMut<Heart>,
+    mut diffculty: ResMut<DifficultyMultiplier>,
+) {
     score.0 = 0;
+    hearts.0 = INITIAL_HEART_COUNT;
+    diffculty.0 = 1.0;
 }
 
-pub fn reset_heart(mut hearts: ResMut<Heart>) {
-    hearts.0 = INITIAL_HEART_COUNT;
+fn step_difficulty(
+    mut diffculty: ResMut<DifficultyMultiplier>,
+    score: Res<Score>,
+) {
+    diffculty.0 = dbg!(1.0 + ((score.0/100) as f32 * 0.5));
 }
 
 fn game_over(

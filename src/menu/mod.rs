@@ -1,4 +1,4 @@
-use crate::{game::{reset_heart, reset_score, Heart, Score, INITIAL_HEART_COUNT}, GameState, SimulationState};
+use crate::{game::{reset_stats, Heart, Score, INITIAL_HEART_COUNT}, GameState, SimulationState};
 use bevy::prelude::*;
 
 mod buttons;
@@ -36,7 +36,7 @@ impl Plugin for MainMenuPlugin {
             .add_systems(OnExit(SimulationState::Paused), despawn_pausemenu)
 
             .add_systems(OnEnter(GameState::GameOver), spawn_gameovermenu)
-            .add_systems(OnExit(GameState::GameOver), (despawn_gameovermenu, reset_score, reset_heart))
+            .add_systems(OnExit(GameState::GameOver), (despawn_gameovermenu, reset_stats))
 
             .add_systems(
                 Update,
