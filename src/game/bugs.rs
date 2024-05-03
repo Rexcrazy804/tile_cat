@@ -4,7 +4,7 @@ use bevy::{
 };
 use rand::{random, Rng};
 
-use super::{bullet::Bullet, GameState, Heart, Score, SimulationState, SCALE_FACTOR};
+use super::{bullet::Bullet, DifficultyMultiplier, GameState, Heart, Score, SimulationState, SCALE_FACTOR};
 
 pub const BUG_SIZE: f32 = 16.0;
 const BUG_SPAWN_RATE: f32 = 0.84;
@@ -146,14 +146,15 @@ fn spawn_bug(
 fn move_bug(
     mut bug_query: Query<(&mut Transform, &mut BugVeritcalMovement, &BugCanFly), With<Bug>>,
     time: Res<Time>,
+    diff_mult: Res<DifficultyMultiplier>,
 ) {
     let mut rng = rand::thread_rng();
     for (mut bug_transform, mut movement, can_fly) in &mut bug_query {
         if movement.0.tick(time.delta()).just_finished() && can_fly.0 {
             movement.1 = rng.gen_range(-1..=1) as f32;
         }
-        bug_transform.translation.y += movement.1 * BUG_VERTICAL_SPEED * time.delta_seconds();
-        bug_transform.translation.x += BUG_SPEED * time.delta_seconds();
+        bug_transform.translation.y += movement.1 * BUG_VERTICAL_SPEED * time.delta_seconds() * diff_mult.0;
+        bug_transform.translation.x += BUG_SPEED * time.delta_seconds() * diff_mult.0;
     }
 }
 

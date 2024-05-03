@@ -18,9 +18,10 @@ use clouds::CloudPlugin;
 use flora::FloraPlugin;
 use ground::GroundPlugin;
 
-pub const INITIAL_HEART_COUNT: u8 = 3;
+pub const INITIAL_HEART_COUNT: u8 = 5;
 const GRAVITY: f32 = 200.8;
 const FRICTION: f32 = 0.8;
+const DIFFICULTY_STEP: f32 = 0.4;
 
 #[derive(Component)]
 struct Background;
@@ -157,7 +158,7 @@ fn step_difficulty(
     mut diffculty: ResMut<DifficultyMultiplier>,
     score: Res<Score>,
 ) {
-    diffculty.0 = dbg!(1.0 + ((score.0/100) as f32 * 0.5));
+    diffculty.0 = 1.0 + ((score.0/100) as f32 * DIFFICULTY_STEP);
 }
 
 fn game_over(
