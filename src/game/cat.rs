@@ -14,6 +14,7 @@ const CAT_JUMP_FORCE: f32 = 80.0;
 const CAT_BULLET_ANIMATION_DURATION: f32 = 0.12;
 const MAX_COLLISION_RADIUS: f32 = 1.5;
 const CAT_GUN_WEIGHT: f32 = 10.0; // subtracts from jump force when gun is equiped
+const ANALOGUE_DEADZONE: f32 = 0.15;
 
 #[derive(Component)]
 pub struct Cat {
@@ -144,21 +145,20 @@ fn analogue_movement(
     let Ok(mut cat) = transform_query.get_single_mut() else { return; };
 
     if let Some(id) = current.0 {
-        // handle controller input
         let leftaxis_x = GamepadAxis::new(id, GamepadAxisType::LeftStickX);
         let leftaxis_y = GamepadAxis::new(id, GamepadAxisType::LeftStickY);
 
         if let (Some(x), Some(y)) = (axes.get(leftaxis_x), axes.get(leftaxis_y)) {
             let leftaxis = Vec2::new(x, y);
 
-            if leftaxis.length() > 0.9 && leftaxis.x > 0.5 {
+            if leftaxis.length() > ANALOGUE_DEADZONE && leftaxis.x > ANALOGUE_DEADZONE {
                 cat.direction = EntityDirection::Right;
-                cat.velocity.x += CAT_SPEEED;
+                cat.velocity.x += CAT_SPEEED * leftaxis.length();
             }
 
-            if leftaxis.length() > 0.9 && leftaxis.x < 0.5 {
+            if leftaxis.length() > ANALOGUE_DEADZONE && leftaxis.x < ANALOGUE_DEADZONE {
                 cat.direction = EntityDirection::Left;
-                cat.velocity.x -= CAT_SPEEED;
+                cat.velocity.x -= CAT_SPEEED * leftaxis.length();
             }
         }
     }
