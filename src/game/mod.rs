@@ -22,7 +22,7 @@ pub const INITIAL_HEART_COUNT: u8 = 5;
 const GRAVITY: f32 = 200.8;
 const FRICTION: f32 = 0.8;
 const DIFFICULTY_STEP: f32 = 0.15;
-const DIFFICULTY_UPPER_LIMIT: f32 = 3.0;
+const DIFFICULTY_UPPER_LIMIT: f32 = 4.0;
 
 #[derive(Component)]
 struct Background;

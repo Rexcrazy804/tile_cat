@@ -15,13 +15,13 @@ const CAT_GUN_WEIGHT: f32 = 10.0; // subtracts from jump force when gun is equip
 // Inputs
 const BUTTON_LEFT: [KeyCode; 2] = [KeyCode::A, KeyCode::Left];
 const BUTTON_RIGHT: [KeyCode; 2] = [KeyCode::D, KeyCode::Right];
-const BUTTON_JUMP: [KeyCode; 2] = [KeyCode::W, KeyCode::Up];
+const BUTTON_JUMP: [KeyCode; 3] = [KeyCode::W, KeyCode::Up, KeyCode::Space];
 const BUTTON_BUILD_GROUND: [KeyCode; 2] = [KeyCode::ShiftLeft, KeyCode::ShiftRight];
 
 // Controller
 const CONTROLLER_JUMP: GamepadButtonType = GamepadButtonType::South;
-const CONTROLLER_TOGGLE_GUN: GamepadButtonType = GamepadButtonType::East;
-const CONTROLLER_FIRE: GamepadButtonType = GamepadButtonType::RightTrigger;
+const CONTROLLER_TOGGLE_GUN: GamepadButtonType = GamepadButtonType::North;
+const CONTROLLER_FIRE: GamepadButtonType = GamepadButtonType::RightTrigger2;
 const CONTROLLER_BUILD_GROUND: GamepadButtonType = GamepadButtonType::LeftTrigger;
 
 #[derive(Component)]
@@ -307,7 +307,7 @@ fn fire_bullet_cat(
     mut cat_query: Query<&mut Cat>,
     mut anim_time: ResMut<CatBulletFireTimer>,
     mut bullet_fire_writer: EventWriter<BulletFireEvent>,
-    key_input: Res<Input<KeyCode>>,
+    mouse_input: Res<Input<MouseButton>>,
     controller_input: Res<Input<GamepadButton>>,
     gamepads: Res<Gamepads>,
     time: Res<Time>,
@@ -334,7 +334,7 @@ fn fire_bullet_cat(
         controller_fire = controller_input.just_pressed(fire_gun);
     }
 
-    if (key_input.just_pressed(KeyCode::Space) || controller_fire) && anim_time.0.finished() {
+    if (mouse_input.just_pressed(MouseButton::Left) || controller_fire) && anim_time.0.finished() {
         let direction_multiplier = match cat.direction {
             EntityDirection::Right => 1.0,
             EntityDirection::Left => -1.0,
