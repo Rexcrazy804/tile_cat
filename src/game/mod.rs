@@ -8,15 +8,9 @@ mod bugs;
 mod bullet;
 mod cat;
 mod clouds;
+mod controlls;
 mod flora;
 mod ground;
-
-use bugs::BugPlugin;
-use bullet::BulletPlugin;
-use cat::CatPlugin;
-use clouds::CloudPlugin;
-use flora::FloraPlugin;
-use ground::GroundPlugin;
 
 pub const INITIAL_HEART_COUNT: u8 = 5;
 const GRAVITY: f32 = 200.8;
@@ -41,12 +35,13 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_state::<SimulationState>()
             .add_plugins((
-                CatPlugin,
-                CloudPlugin,
-                BulletPlugin,
-                GroundPlugin,
-                FloraPlugin,
-                BugPlugin,
+                bugs::BugPlugin,
+                bullet::BulletPlugin,
+                cat::CatPlugin,
+                clouds::CloudPlugin,
+                flora::FloraPlugin,
+                ground::GroundPlugin,
+                controlls::ControllsPlugin,
             ))
             .insert_resource(Score(0))
             .insert_resource(Heart(INITIAL_HEART_COUNT))

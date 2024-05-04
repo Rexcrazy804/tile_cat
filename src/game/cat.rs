@@ -1,5 +1,8 @@
+use std::hash::Hash;
+
 use super::{
     bullet::BulletFireEvent,
+    controlls::Controlls,
     ground::{Ground, GroundBuildEvent, GROUND_HEIGHT, GROUND_WIDTH},
     EntityDirection, GameState, SimulationState, FRICTION, GRAVITY, SCALE_FACTOR,
 };
@@ -11,18 +14,6 @@ const CAT_JUMP_FORCE: f32 = 80.0;
 const CAT_BULLET_ANIMATION_DURATION: f32 = 0.12;
 const MAX_COLLISION_RADIUS: f32 = 1.5;
 const CAT_GUN_WEIGHT: f32 = 10.0; // subtracts from jump force when gun is equiped
-
-// Inputs
-const BUTTON_LEFT: [KeyCode; 2] = [KeyCode::A, KeyCode::Left];
-const BUTTON_RIGHT: [KeyCode; 2] = [KeyCode::D, KeyCode::Right];
-const BUTTON_JUMP: [KeyCode; 3] = [KeyCode::W, KeyCode::Up, KeyCode::Space];
-const BUTTON_BUILD_GROUND: [KeyCode; 2] = [KeyCode::ShiftLeft, KeyCode::ShiftRight];
-
-// Controller
-const CONTROLLER_JUMP: GamepadButtonType = GamepadButtonType::South;
-const CONTROLLER_TOGGLE_GUN: GamepadButtonType = GamepadButtonType::North;
-const CONTROLLER_FIRE: GamepadButtonType = GamepadButtonType::RightTrigger2;
-const CONTROLLER_BUILD_GROUND: GamepadButtonType = GamepadButtonType::LeftTrigger;
 
 #[derive(Component)]
 pub struct Cat {
@@ -58,13 +49,24 @@ impl Plugin for CatPlugin {
             .add_systems(
                 Update,
                 (
-                    move_cat.before(confine_cat),
-                    jump_cat,
+                    (
+                        move_cat::<KeyCode>.before(confine_cat),
+                        toggle_cat_gun::<KeyCode>,
+                        fire_bullet_cat::<KeyCode>,
+                        build_ground_cat::<KeyCode>,
+                        jump_cat::<KeyCode>,
+                    ),
+                    (
+                        move_cat::<GamepadButton>.before(confine_cat),
+                        toggle_cat_gun::<GamepadButton>,
+                        fire_bullet_cat::<GamepadButton>,
+                        build_ground_cat::<GamepadButton>,
+                        jump_cat::<GamepadButton>,
+                    ),
+
+                    physics_on_cat,
                     confine_cat,
                     animate_cat,
-                    toggle_cat_gun,
-                    fire_bullet_cat,
-                    build_ground_cat,
                 )
                     .run_if(in_state(SimulationState::Running))
                     .run_if(in_state(GameState::Game)),
@@ -107,50 +109,62 @@ fn despawn_cat(mut commands: Commands, cat_query: Query<Entity, With<Cat>>) {
     commands.entity(entity).despawn();
 }
 
-fn move_cat(
-    mut transform_query: Query<(&mut Transform, &mut Cat)>,
-    keyboard_input: Res<Input<KeyCode>>,
-    time: Res<Time>,
-    gamepads: Res<Gamepads>,
-    axes: Res<Axis<GamepadAxis>>,
+fn move_cat<T: Copy + Eq + Hash + Send + Sync + 'static>
+(
+    mut transform_query: Query<&mut Cat>,
+    input: Res<Input<T>>,
+    controller: Res<Controlls<T>>,
+    // gamepad_controller: Res<Controlls<GamepadButton>>,
 ) {
-    let Ok((mut transform, mut cat)) = transform_query.get_single_mut() else {
+    let Ok(mut cat) = transform_query.get_single_mut() else {
         return;
     };
 
-    let controller = gamepads.iter().next(); // get teh first connected game pad
 
-    if let Some(id) = controller {
-        // handle controller input
-        let leftaxis_x = GamepadAxis::new(id, GamepadAxisType::LeftStickX);
-        let leftaxis_y = GamepadAxis::new(id, GamepadAxisType::LeftStickY);
+    // if let Some(id) = controller {
+    //     // handle controller input
+    //     let leftaxis_x = GamepadAxis::new(id, GamepadAxisType::LeftStickX);
+    //     let leftaxis_y = GamepadAxis::new(id, GamepadAxisType::LeftStickY);
+    //
+    //     if let (Some(x), Some(y)) = (axes.get(leftaxis_x), axes.get(leftaxis_y)) {
+    //         let leftaxis = Vec2::new(x, y);
+    //
+    //         if leftaxis.length() > 0.9 && leftaxis.x > 0.5 {
+    //             cat.direction = EntityDirection::Right;
+    //             cat.velocity.x += CAT_SPEEED;
+    //         }
+    //
+    //         if leftaxis.length() > 0.9 && leftaxis.x < 0.5 {
+    //             cat.direction = EntityDirection::Left;
+    //             cat.velocity.x -= CAT_SPEEED;
+    //         }
+    //     }
+    // }
 
-        if let (Some(x), Some(y)) = (axes.get(leftaxis_x), axes.get(leftaxis_y)) {
-            let leftaxis = Vec2::new(x, y);
-
-            if leftaxis.length() > 0.9 && leftaxis.x > 0.5 {
-                cat.direction = EntityDirection::Right;
-                cat.velocity.x += CAT_SPEEED;
-            }
-
-            if leftaxis.length() > 0.9 && leftaxis.x < 0.5 {
-                cat.direction = EntityDirection::Left;
-                cat.velocity.x -= CAT_SPEEED;
-            }
+    if let Some(keypress) = controller.right {
+        if input.pressed(keypress) {
+            cat.direction = EntityDirection::Right;
+            cat.velocity.x += CAT_SPEEED;
         }
     }
 
-    if keyboard_input.any_pressed(BUTTON_RIGHT) {
-        cat.direction = EntityDirection::Right;
-        cat.velocity.x += CAT_SPEEED;
+    if let Some(keypress) = controller.left {
+        if input.pressed(keypress) {
+            cat.direction = EntityDirection::Left;
+            cat.velocity.x -= CAT_SPEEED;
+        }
     }
-    if keyboard_input.any_pressed(BUTTON_LEFT) {
-        cat.direction = EntityDirection::Left;
-        cat.velocity.x -= CAT_SPEEED;
-    }
+}
 
-    // GRAVITY
+fn physics_on_cat(
+    mut cat_query: Query<(&mut Transform, &mut Cat), With<Cat>>,
+    time: Res<Time>
+) {
+    let Ok((mut transform, mut cat)) = cat_query.get_single_mut() else {
+        return;
+    };
     cat.velocity.y -= GRAVITY * time.delta_seconds();
+
     // FRICTION
     cat.velocity.x -= cat.velocity.x * (1.0 - FRICTION);
 
@@ -183,6 +197,7 @@ fn confine_cat(
         cat.velocity.y = 0.0;
         cat.can_jump = true;
     }
+
     if cat_transform.translation.y > y_max {
         cat_transform.translation.y = y_max
     }
@@ -227,27 +242,19 @@ fn get_min_max(window_limit: f32) -> (f32, f32) {
     (min, max)
 }
 
-fn jump_cat(
+fn jump_cat<T: Copy + Eq + Hash + Send + Sync + 'static>
+(
     mut cat_query: Query<&mut Cat>,
-    input: Res<Input<KeyCode>>,
-    gamepads: Res<Gamepads>,
-    button: Res<Input<GamepadButton>>,
+    input: Res<Input<T>>,
+    controller: Res<Controlls<T>>,
 ) {
     let Ok(mut cat) = cat_query.get_single_mut() else {
         return;
     };
 
-    let controller = gamepads.iter().next(); // get teh first connected game pad
-    let mut controller_jump = false;
+    let Some(keypress) = controller.jump else { return };
 
-    if let Some(id) = controller {
-        // handle controller input
-        let jump_button = GamepadButton::new(id, CONTROLLER_JUMP);
-
-        controller_jump = button.just_pressed(jump_button);
-    }
-
-    if (input.any_just_pressed(BUTTON_JUMP) || controller_jump) && cat.can_jump {
+    if input.just_pressed(keypress) && cat.can_jump {
         cat.velocity.y += CAT_JUMP_FORCE;
         if cat.has_gun {
             cat.velocity.y -= CAT_GUN_WEIGHT;
@@ -278,38 +285,30 @@ fn animate_cat(mut transform_query: Query<(&mut Transform, &Cat, &mut TextureAtl
     }
 }
 
-fn toggle_cat_gun(
+fn toggle_cat_gun<T: Copy + Eq + Send + Sync + 'static + Hash> (
     mut cat_query: Query<&mut Cat>,
-    key_input: Res<Input<KeyCode>>,
-    controller_input: Res<Input<GamepadButton>>,
-    gamepads: Res<Gamepads>,
+    input: Res<Input<T>>,
+    controller: Res<Controlls<T>>,
 ) {
     let Ok(mut cat) = cat_query.get_single_mut() else {
         return;
     };
 
-    let controller = gamepads.iter().next(); // get teh first connected game pad
-    let mut controller_toggle = false;
+    let Some(keypress) = controller.toggle_weapon else { return };
 
-    if let Some(id) = controller {
-        // handle controller input
-        let gun_toggle_button = GamepadButton::new(id, CONTROLLER_TOGGLE_GUN);
-
-        controller_toggle = controller_input.just_pressed(gun_toggle_button);
-    }
-
-    if key_input.just_pressed(KeyCode::F) || controller_toggle {
+    if input.just_pressed(keypress) {
         cat.has_gun = !cat.has_gun
     }
 }
 
-fn fire_bullet_cat(
+fn fire_bullet_cat<T: Copy + Eq + Send + Sync + 'static + Hash>
+(
     mut cat_query: Query<&mut Cat>,
     mut anim_time: ResMut<CatBulletFireTimer>,
     mut bullet_fire_writer: EventWriter<BulletFireEvent>,
-    mouse_input: Res<Input<MouseButton>>,
-    controller_input: Res<Input<GamepadButton>>,
-    gamepads: Res<Gamepads>,
+
+    input: Res<Input<T>>,
+    controller: Res<Controlls<T>>,
     time: Res<Time>,
 ) {
     let Ok(mut cat) = cat_query.get_single_mut() else {
@@ -324,49 +323,34 @@ fn fire_bullet_cat(
         cat.is_firing = false;
     }
 
-    let controller = gamepads.iter().next(); // get teh first connected game pad
-    let mut controller_fire = false;
+    let Some(keypress) = controller.fire  else { return };
 
-    if let Some(id) = controller {
-        // handle controller input
-        let fire_gun = GamepadButton::new(id, CONTROLLER_FIRE);
-
-        controller_fire = controller_input.just_pressed(fire_gun);
-    }
-
-    if (mouse_input.just_pressed(MouseButton::Left) || controller_fire) && anim_time.0.finished() {
+    if input.just_pressed(keypress) && anim_time.0.finished() {
         let direction_multiplier = match cat.direction {
             EntityDirection::Right => 1.0,
             EntityDirection::Left => -1.0,
         };
+
         bullet_fire_writer.send(BulletFireEvent(direction_multiplier));
         anim_time.0.reset();
         cat.is_firing = true;
     }
 }
 
-fn build_ground_cat(
+fn build_ground_cat<T: Copy + Eq + Send + Sync + 'static + Hash>
+(
     mut ground_build_writer: EventWriter<GroundBuildEvent>,
-    controller_input: Res<Input<GamepadButton>>,
-    gamepads: Res<Gamepads>,
-    key_input: Res<Input<KeyCode>>,
+    input: Res<Input<T>>,
+    controller: Res<Controlls<T>>,
     transform_query: Query<&Transform, With<Cat>>,
 ) {
     let Ok(transform) = transform_query.get_single() else {
         return;
     };
 
-    let controller = gamepads.iter().next(); // get teh first connected game pad
-    let mut controller_build = false;
+    let Some(keypress) = controller.place_block else { return; };
 
-    if let Some(id) = controller {
-        // handle controller input
-        let build_button = GamepadButton::new(id, CONTROLLER_BUILD_GROUND);
-
-        controller_build = controller_input.just_pressed(build_button);
-    }
-
-    if key_input.any_just_pressed(BUTTON_BUILD_GROUND) || controller_build {
+    if input.just_pressed(keypress) {
         ground_build_writer.send(GroundBuildEvent(transform.translation));
     }
 }
