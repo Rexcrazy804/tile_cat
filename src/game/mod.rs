@@ -1,7 +1,6 @@
 use crate::{GameState, SimulationState, SCALE_FACTOR};
 use bevy::{
-    prelude::*,
-    window::{PrimaryWindow, WindowResized},
+    prelude::*, window::{PrimaryWindow, WindowResized}
 };
 
 mod bugs;
@@ -142,6 +141,26 @@ fn toggle_simulation(
         SimulationState::InActive => (),
     }
 }
+
+// fn handle_gamepad(
+//     mut commands: Commands,
+//     current_gamepad: Option<Res<Controller>>,
+//     mut gamepad_evr: EventReader<GamepadEvent>,
+// ) {
+//     for event in gamepad_evr.read() {
+//         if let GamepadEvent::Connection(connection) = event {
+//             if connection.connected() {
+//                 if current_gamepad.is_some() { return; }
+//
+//                 commands.insert_resource(Controller(dbg!(connection.gamepad.id)))
+//             } else if let Some(ref controller) = current_gamepad {
+//                 if controller.0 == connection.gamepad.id {
+//                     commands.remove_resource::<Controller>()
+//                 }
+//             }
+//         }
+//     }
+// }
 
 pub fn reset_stats(
     mut score: ResMut<Score>,
