@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use super::{
     bullet::BulletFireEvent,
-    controlls::Controlls,
+    controlls::{Controlls, CurrentGamepad},
     ground::{Ground, GroundBuildEvent, GROUND_HEIGHT, GROUND_WIDTH},
     EntityDirection, GameState, SimulationState, FRICTION, GRAVITY, SCALE_FACTOR,
 };
@@ -64,6 +64,7 @@ impl Plugin for CatPlugin {
                         jump_cat::<GamepadButton>,
                     ),
 
+                    analogue_movement,
                     physics_on_cat,
                     confine_cat,
                     animate_cat,
@@ -120,27 +121,6 @@ fn move_cat<T: Copy + Eq + Hash + Send + Sync + 'static>
         return;
     };
 
-
-    // if let Some(id) = controller {
-    //     // handle controller input
-    //     let leftaxis_x = GamepadAxis::new(id, GamepadAxisType::LeftStickX);
-    //     let leftaxis_y = GamepadAxis::new(id, GamepadAxisType::LeftStickY);
-    //
-    //     if let (Some(x), Some(y)) = (axes.get(leftaxis_x), axes.get(leftaxis_y)) {
-    //         let leftaxis = Vec2::new(x, y);
-    //
-    //         if leftaxis.length() > 0.9 && leftaxis.x > 0.5 {
-    //             cat.direction = EntityDirection::Right;
-    //             cat.velocity.x += CAT_SPEEED;
-    //         }
-    //
-    //         if leftaxis.length() > 0.9 && leftaxis.x < 0.5 {
-    //             cat.direction = EntityDirection::Left;
-    //             cat.velocity.x -= CAT_SPEEED;
-    //         }
-    //     }
-    // }
-
     if let Some(keypress) = controller.right {
         if input.pressed(keypress) {
             cat.direction = EntityDirection::Right;
@@ -152,6 +132,34 @@ fn move_cat<T: Copy + Eq + Hash + Send + Sync + 'static>
         if input.pressed(keypress) {
             cat.direction = EntityDirection::Left;
             cat.velocity.x -= CAT_SPEEED;
+        }
+    }
+}
+
+fn analogue_movement(
+    mut transform_query: Query<&mut Cat>,
+    current: Res<CurrentGamepad>,
+    axes: Res<Axis<GamepadAxis>>,
+) {
+    let Ok(mut cat) = transform_query.get_single_mut() else { return; };
+
+    if let Some(id) = current.0 {
+        // handle controller input
+        let leftaxis_x = GamepadAxis::new(id, GamepadAxisType::LeftStickX);
+        let leftaxis_y = GamepadAxis::new(id, GamepadAxisType::LeftStickY);
+
+        if let (Some(x), Some(y)) = (axes.get(leftaxis_x), axes.get(leftaxis_y)) {
+            let leftaxis = Vec2::new(x, y);
+
+            if leftaxis.length() > 0.9 && leftaxis.x > 0.5 {
+                cat.direction = EntityDirection::Right;
+                cat.velocity.x += CAT_SPEEED;
+            }
+
+            if leftaxis.length() > 0.9 && leftaxis.x < 0.5 {
+                cat.direction = EntityDirection::Left;
+                cat.velocity.x -= CAT_SPEEED;
+            }
         }
     }
 }

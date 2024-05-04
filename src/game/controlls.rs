@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 
 #[derive(Resource)]
+pub struct CurrentGamepad(pub Option<Gamepad>);
+
+#[derive(Resource)]
 pub struct Controlls<T> {
-    pub up: Option<T>,
-    pub down: Option<T>,
     pub left: Option<T>,
     pub right: Option<T>,
 
@@ -11,13 +12,12 @@ pub struct Controlls<T> {
     pub fire: Option<T>,
     pub toggle_weapon: Option<T>,
     pub place_block: Option<T>,
+    pub pause: Option<T>,
 }
 
 impl Controlls<KeyCode> {
     fn new() -> Controlls<KeyCode> {
         Controlls {
-            up: Some(KeyCode::W),
-            down: Some(KeyCode::S),
             left: Some(KeyCode::A),
             right: Some(KeyCode::D),
 
@@ -25,6 +25,7 @@ impl Controlls<KeyCode> {
             fire: Some(KeyCode::J),
             toggle_weapon: Some(KeyCode::F),
             place_block: Some(KeyCode::ShiftLeft),
+            pause: Some(KeyCode::Escape),
         }
     }
 }
@@ -32,8 +33,6 @@ impl Controlls<KeyCode> {
 impl<T> Controlls<T> {
     fn empty() -> Self {
         Self {
-            up: None,
-            down: None,
             left: None,
             right: None,
 
@@ -41,6 +40,7 @@ impl<T> Controlls<T> {
             fire: None,
             toggle_weapon: None,
             place_block: None,
+            pause: None,
         }
     }
 }
@@ -48,8 +48,6 @@ impl<T> Controlls<T> {
 impl Controlls<GamepadButton> {
     fn new(gamepad: Gamepad) -> Controlls<GamepadButton> {
         Controlls {
-            up: Some(GamepadButton::new(gamepad, GamepadButtonType::DPadUp)),
-            down: Some(GamepadButton::new(gamepad, GamepadButtonType::DPadDown)),
             left: Some(GamepadButton::new(gamepad, GamepadButtonType::DPadLeft)),
             right: Some(GamepadButton::new(gamepad, GamepadButtonType::DPadRight)),
 
@@ -57,6 +55,7 @@ impl Controlls<GamepadButton> {
             fire: Some(GamepadButton::new(gamepad, GamepadButtonType::RightTrigger2)),
             toggle_weapon: Some(GamepadButton::new(gamepad, GamepadButtonType::North)),
             place_block: Some(GamepadButton::new(gamepad, GamepadButtonType::LeftTrigger)),
+            pause: Some(GamepadButton::new(gamepad, GamepadButtonType::Start)),
         }
     }
 }
@@ -67,6 +66,7 @@ impl Plugin for ControllsPlugin {
         app
             .insert_resource(Controlls::<KeyCode>::new())
             .insert_resource(Controlls::<GamepadButton>::empty())
+            .insert_resource(CurrentGamepad(None))
             .add_systems(Update, update_gamepad.run_if(resource_changed::<Gamepads>()))
         ;
     }
@@ -74,9 +74,11 @@ impl Plugin for ControllsPlugin {
 
 pub fn update_gamepad(
     mut controller: ResMut<Controlls<GamepadButton>>,
+    mut current: ResMut<CurrentGamepad>,
     gamepads: Res<Gamepads>,
 ) {
     if let Some(gamepad) = gamepads.iter().next() {
-        *controller = Controlls::<GamepadButton>::new(gamepad)
+        *controller = Controlls::<GamepadButton>::new(gamepad);
+        current.0 = Some(gamepad);
     }
 }

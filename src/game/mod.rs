@@ -1,8 +1,12 @@
+use std::hash::Hash;
+
 use crate::{GameState, SimulationState, SCALE_FACTOR};
 use bevy::{
     prelude::*,
     window::{PrimaryWindow, WindowResized},
 };
+
+use self::controlls::Controlls;
 
 mod bugs;
 mod bullet;
@@ -57,7 +61,8 @@ impl Plugin for GamePlugin {
             .add_systems(
                 Update,
                 (
-                    toggle_simulation,
+                    toggle_simulation::<KeyCode>,
+                    toggle_simulation::<GamepadButton>,
                     resize_bacground,
                     game_over.run_if(resource_changed::<Heart>()),
                     step_difficulty.run_if(resource_changed::<Score>()),
@@ -123,14 +128,19 @@ fn stop_simulation(mut next_state: ResMut<NextState<SimulationState>>) {
     next_state.set(SimulationState::InActive)
 }
 
-fn toggle_simulation(
-    key_input: Res<Input<KeyCode>>,
+fn toggle_simulation <T: Copy + Eq + Hash + Send + Sync + 'static>
+(
+    input: Res<Input<T>>,
+    controller: Res<Controlls<T>>,
     current_state: Res<State<SimulationState>>,
     mut next_state: ResMut<NextState<SimulationState>>,
 ) {
-    if !key_input.just_pressed(KeyCode::Escape) {
+    let Some(keypress) = controller.pause else { return };
+
+    if !input.just_pressed(keypress) {
         return;
     }
+
     match *current_state.get() {
         SimulationState::Running => next_state.set(SimulationState::Paused),
         SimulationState::Paused => next_state.set(SimulationState::Running),
