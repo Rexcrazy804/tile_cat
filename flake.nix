@@ -1,4 +1,5 @@
 {
+  description = "A Flake for setting up Rust to work with bevy with wasm32 build target";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     rust-overlay.url = "github:oxalica/rust-overlay";
