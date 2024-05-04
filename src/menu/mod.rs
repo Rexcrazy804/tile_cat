@@ -1,5 +1,5 @@
 use crate::{
-    game::{reset_stats, Heart, Score, INITIAL_HEART_COUNT},
+    game::{reset_stats, DifficultyMultiplier, Heart, Score, INITIAL_HEART_COUNT},
     GameState, SimulationState,
 };
 use bevy::prelude::*;
@@ -26,6 +26,9 @@ struct ScoreText;
 #[derive(Component)]
 struct HeartText;
 
+#[derive(Component)]
+struct DifficultyText;
+
 pub struct MainMenuPlugin;
 impl Plugin for MainMenuPlugin {
     fn build(&self, app: &mut App) {
@@ -43,6 +46,7 @@ impl Plugin for MainMenuPlugin {
                     button_interactions,
                     update_score.run_if(resource_changed::<Score>()),
                     update_heart.run_if(resource_changed::<Heart>()),
+                    update_difficulty.run_if(resource_changed::<DifficultyMultiplier>()),
                 ),
             );
     }
@@ -158,6 +162,14 @@ fn spawn_statsbar(mut commands: Commands) {
         ..default()
     };
 
+    let difficulty_text = TextBundle {
+        text: Text::from_sections([
+            TextSection::new("Difficulty: ", text_style.clone()),
+            TextSection::new("1x", text_style.clone()),
+        ]),
+        ..default()
+    };
+
     commands
         .spawn((
             NodeBundle {
@@ -179,12 +191,21 @@ fn spawn_statsbar(mut commands: Commands) {
                 });
             parent
                 .spawn(NodeBundle {
-                    style: box_style,
+                    style: box_style.clone(),
                     background_color: Color::hsl(0.0, 0.1, 0.3).into(),
                     ..default()
                 })
                 .with_children(|parent| {
                     parent.spawn((heart_text, HeartText));
+                });
+            parent
+                .spawn(NodeBundle {
+                    style: box_style.clone(),
+                    background_color: Color::hsl(0.0, 0.1, 0.3).into(),
+                    ..default()
+                })
+                .with_children(|parent| {
+                    parent.spawn((difficulty_text, DifficultyText));
                 });
         });
 }
@@ -237,6 +258,13 @@ fn update_heart(mut query: Query<&mut Text, With<HeartText>>, heart: Res<Heart>)
         return;
     };
     heart_text.sections[1].value = heart.0.to_string();
+}
+
+fn update_difficulty(mut query: Query<&mut Text, With<DifficultyText>>, diff: Res<DifficultyMultiplier>) {
+    let Ok(mut diff_text) = query.get_single_mut() else {
+        return;
+    };
+    diff_text.sections[1].value = format!("{:.2}x", diff.0);
 }
 
 fn despawn_pausemenu(mut commands: Commands, query: Query<Entity, With<PauseMenu>>) {

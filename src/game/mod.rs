@@ -21,7 +21,8 @@ use ground::GroundPlugin;
 pub const INITIAL_HEART_COUNT: u8 = 5;
 const GRAVITY: f32 = 200.8;
 const FRICTION: f32 = 0.8;
-const DIFFICULTY_STEP: f32 = 0.2;
+const DIFFICULTY_STEP: f32 = 0.15;
+const DIFFICULTY_UPPER_LIMIT: f32 = 3.0;
 
 #[derive(Component)]
 struct Background;
@@ -33,7 +34,7 @@ pub struct Score(pub u32);
 pub struct Heart(pub u8);
 
 #[derive(Resource)]
-pub struct DifficultyMultiplier(f32);
+pub struct DifficultyMultiplier(pub f32);
 
 pub struct GamePlugin;
 impl Plugin for GamePlugin {
@@ -153,6 +154,7 @@ pub fn reset_stats(
 }
 
 fn step_difficulty(mut diffculty: ResMut<DifficultyMultiplier>, score: Res<Score>) {
+    if diffculty.0 >= DIFFICULTY_UPPER_LIMIT { return; }
     diffculty.0 = 1.0 + ((score.0 / 50) as f32 * DIFFICULTY_STEP);
 }
 
