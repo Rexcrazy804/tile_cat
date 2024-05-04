@@ -35,35 +35,36 @@
     });
 
     devShells = forAllSystems (pkgs: {
-      default = pkgs.mkShell.override {
-        stdenv = pkgs.stdenvAdapters.useMoldLinker pkgs.clangStdenv;
-      } rec {
-        shellHook = ''
-          exec $SHELL
-        '';
+      default =
+        pkgs.mkShell.override {
+          stdenv = pkgs.stdenvAdapters.useMoldLinker pkgs.clangStdenv;
+        } rec {
+          shellHook = ''
+            exec $SHELL
+          '';
 
-        RUST_BACKTRACE = 1;
+          RUST_BACKTRACE = 1;
 
-        nativeBuildInputs = with pkgs; [
-          (rust-bin.nightly.latest.default.override {
-            targets = ["wasm32-unknown-unknown"];
-          })
-        ];
+          nativeBuildInputs = with pkgs; [
+            (rust-bin.nightly.latest.default.override {
+              targets = ["wasm32-unknown-unknown"];
+            })
+          ];
 
-        buildInputs = with pkgs; [
-          pkg-config
-          alsa-lib
-          libudev-zero
-          vulkan-loader
-          libxkbcommon
-          wayland
-        ];
+          buildInputs = with pkgs; [
+            pkg-config
+            alsa-lib
+            libudev-zero
+            vulkan-loader
+            libxkbcommon
+            wayland
+          ];
 
-        packages = [pkgs.rust-analyzer];
+          packages = [pkgs.rust-analyzer];
 
-        # Required for Bevy LD
-        LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath buildInputs;
-      };
+          # Required for Bevy LD
+          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath buildInputs;
+        };
     });
   };
 }

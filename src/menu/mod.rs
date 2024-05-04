@@ -260,7 +260,10 @@ fn update_heart(mut query: Query<&mut Text, With<HeartText>>, heart: Res<Heart>)
     heart_text.sections[1].value = heart.0.to_string();
 }
 
-fn update_difficulty(mut query: Query<&mut Text, With<DifficultyText>>, diff: Res<DifficultyMultiplier>) {
+fn update_difficulty(
+    mut query: Query<&mut Text, With<DifficultyText>>,
+    diff: Res<DifficultyMultiplier>,
+) {
     let Ok(mut diff_text) = query.get_single_mut() else {
         return;
     };

@@ -1,6 +1,7 @@
 use crate::{GameState, SimulationState, SCALE_FACTOR};
 use bevy::{
-    prelude::*, window::{PrimaryWindow, WindowResized}
+    prelude::*,
+    window::{PrimaryWindow, WindowResized},
 };
 
 mod bugs;
@@ -173,7 +174,9 @@ pub fn reset_stats(
 }
 
 fn step_difficulty(mut diffculty: ResMut<DifficultyMultiplier>, score: Res<Score>) {
-    if diffculty.0 >= DIFFICULTY_UPPER_LIMIT { return; }
+    if diffculty.0 >= DIFFICULTY_UPPER_LIMIT {
+        return;
+    }
     diffculty.0 = 1.0 + ((score.0 / 50) as f32 * DIFFICULTY_STEP);
 }
 

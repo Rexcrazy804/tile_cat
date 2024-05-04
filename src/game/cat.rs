@@ -301,7 +301,6 @@ fn toggle_cat_gun(
     if key_input.just_pressed(KeyCode::F) || controller_toggle {
         cat.has_gun = !cat.has_gun
     }
-
 }
 
 fn fire_bullet_cat(
