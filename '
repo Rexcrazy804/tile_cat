@@ -289,14 +289,20 @@ fn get_action_text(
     kbd_controlls: &Res<Controlls<KeyCode>>,
 ) -> String {
     match action {
-        CatAction::Up => format!("Up: {:?}", kbd_controlls.up.unwrap_or(KeyCode::Unlabeled)),
-        CatAction::Left => format!("Left: {:?}", kbd_controlls.left.unwrap_or(KeyCode::Unlabeled)),
-        CatAction::Right => format!("Right: {:?}", kbd_controlls.right.unwrap_or(KeyCode::Unlabeled)),
-        CatAction::Jump => format!("Jump: {:?}", kbd_controlls.jump.unwrap_or(KeyCode::Unlabeled)),
-        CatAction::Fire => format!("Fire: {:?}", kbd_controlls.fire.unwrap_or(KeyCode::Unlabeled)),
-        CatAction::ToggleWeapon => format!("ToggleWeapon: {:?}", kbd_controlls.toggle_weapon.unwrap_or(KeyCode::Unlabeled)),
-        CatAction::PlaceBlock => format!("PlaceBlock: {:?}", kbd_controlls.place_block.unwrap_or(KeyCode::Unlabeled)),
-        CatAction::Pause => format!("Pause: {:?}", kbd_controlls.pause.unwrap_or(KeyCode::Unlabeled)),
+        CatAction::Up => {
+            if let Some(key) = kbd_controlls.up {
+                format!("Up: kbd {:?}", kbd_controlls.up)
+            } else {
+                Strong::from("None")
+            }
+        },
+        CatAction::Left => format!("Left: kbd {:?}", kbd_controlls.left),
+        CatAction::Right => format!("Right: kbd {:?}", kbd_controlls.right),
+        CatAction::Jump => format!("Jump: kbd {:?}", kbd_controlls.jump),
+        CatAction::Fire => format!("Fire: kbd {:?}", kbd_controlls.fire),
+        CatAction::ToggleWeapon => format!("ToggleWeapon: kbd {:?}", kbd_controlls.toggle_weapon),
+        CatAction::PlaceBlock => format!("PlaceBlock: kbd {:?}", kbd_controlls.place_block),
+        CatAction::Pause => format!("Pause: kbd {:?}", kbd_controlls.pause),
     }
 }
 
