@@ -18,7 +18,6 @@ pub enum ButtonType {
     SettingsButton(CatAction),
 }
 
-
 pub fn button_interactions(
     mut commands: Commands,
     mut next_game_state: ResMut<NextState<GameState>>,
@@ -68,24 +67,26 @@ pub fn attach_button(parent: &mut ChildBuilder, button_type: ButtonType, button_
         ..default()
     };
 
-    parent.spawn((
-        ButtonBundle {
-            style: button_style,
-            background_color: DEFUALT_BUTTON_COLOR.into(),
-            ..default()
-        },
-        button_type.clone(),
-    )).with_children(|parent| {
-        parent.spawn((
-            TextBundle {
-                text: Text::from_section(button_text, text_style),
+    parent
+        .spawn((
+            ButtonBundle {
+                style: button_style,
+                background_color: DEFUALT_BUTTON_COLOR.into(),
                 ..default()
             },
-            if let ButtonType::SettingsButton(action) = button_type {
-                SettingsText(true, Some(action))
-            } else {
-                SettingsText(false, None)
-            }
-        ));
-    });
+            button_type.clone(),
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                TextBundle {
+                    text: Text::from_section(button_text, text_style),
+                    ..default()
+                },
+                if let ButtonType::SettingsButton(action) = button_type {
+                    SettingsText(true, Some(action))
+                } else {
+                    SettingsText(false, None)
+                },
+            ));
+        });
 }

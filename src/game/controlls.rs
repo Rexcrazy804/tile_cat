@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use bevy::input::gamepad::GamepadButtonInput;
 use bevy::input::keyboard::KeyboardInput;
-use bevy::{log, prelude::*};
+use bevy::prelude::*;
 
 #[derive(Resource)]
 pub struct CurrentGamepad(pub Option<Gamepad>);
@@ -76,7 +76,7 @@ impl Plugin for ControllsPlugin {
                 (
                     initialize_gamepad.run_if(resource_changed::<Gamepads>()),
                     handle_controll_change.run_if(resource_exists::<ControllChange>()),
-                )
+                ),
             );
     }
 }
@@ -132,7 +132,11 @@ fn handle_controll_change(
         update_button(&mut kbd_controller, controllchange.0, key_event.key_code);
         commands.remove_resource::<ControllChange>();
     } else if let Some(button_event) = gamepad_events.read().next() {
-        update_button(&mut gamepad_controller, controllchange.0, Some(button_event.button));
+        update_button(
+            &mut gamepad_controller,
+            controllchange.0,
+            Some(button_event.button),
+        );
         commands.remove_resource::<ControllChange>();
     }
 }
@@ -144,12 +148,12 @@ pub fn update_button<T: Copy + Eq + Hash + Send + Sync + 'static>(
 ) {
     match action {
         CatAction::Up => controller.up = button,
-        CatAction::Left => controller.left = button, 
-        CatAction::Right => controller.right = button, 
-        CatAction::Jump => controller.jump = button, 
-        CatAction::Fire => controller.fire = button, 
-        CatAction::ToggleWeapon => controller.toggle_weapon = button, 
-        CatAction::PlaceBlock => controller.place_block = button, 
-        CatAction::Pause => controller.pause = button, 
+        CatAction::Left => controller.left = button,
+        CatAction::Right => controller.right = button,
+        CatAction::Jump => controller.jump = button,
+        CatAction::Fire => controller.fire = button,
+        CatAction::ToggleWeapon => controller.toggle_weapon = button,
+        CatAction::PlaceBlock => controller.place_block = button,
+        CatAction::Pause => controller.pause = button,
     }
 }
