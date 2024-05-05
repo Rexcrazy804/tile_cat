@@ -64,6 +64,10 @@ impl Plugin for CatPlugin {
                         build_ground_cat::<GamepadButton>,
                         jump_cat::<GamepadButton>,
                     ),
+                    (
+                        fire_bullet_cat::<MouseButton>,
+                        toggle_cat_gun::<MouseButton>,
+                    ),
                     analogue_movement,
                     physics_on_cat,
                     confine_cat,
@@ -256,11 +260,17 @@ fn jump_cat<T: Copy + Eq + Hash + Send + Sync + 'static>(
         return;
     };
 
-    let Some(keypress) = controller.jump else {
-        return;
+    let mut jump_the_cat = false;
+
+    if let Some(keypress) = controller.jump {
+        jump_the_cat = jump_the_cat || input.just_pressed(keypress) && cat.can_jump
     };
 
-    if input.just_pressed(keypress) && cat.can_jump {
+    if let Some(keypress) = controller.up {
+        jump_the_cat = jump_the_cat || input.just_pressed(keypress) && cat.can_jump
+    };
+
+    if jump_the_cat {
         cat.velocity.y += CAT_JUMP_FORCE;
         if cat.has_gun {
             cat.velocity.y -= CAT_GUN_WEIGHT;

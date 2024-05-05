@@ -9,7 +9,6 @@ use game::GamePlugin;
 use menu::MainMenuPlugin;
 
 pub const SCALE_FACTOR: f32 = 4.0;
-pub const ASPECT_RATIO: f32 = 9. / 16.;
 
 #[derive(States, Default, Clone, Copy, Debug, Hash, Eq, PartialEq)]
 pub enum GameState {
