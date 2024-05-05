@@ -63,7 +63,7 @@
 
           packages = with pkgs; [
             rust-analyzer
-            wasm-bindgen-cli
+            trunk
           ];
 
           # Required for Bevy LD

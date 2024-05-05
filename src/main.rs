@@ -1,3 +1,5 @@
+use bevy::asset::AssetMetaCheck;
+use bevy::window::PresentMode;
 use bevy::{app::AppExit, prelude::*};
 
 mod game;
@@ -7,6 +9,7 @@ use game::GamePlugin;
 use menu::MainMenuPlugin;
 
 pub const SCALE_FACTOR: f32 = 4.0;
+pub const ASPECT_RATIO: f32 = 9. / 16.;
 
 #[derive(States, Default, Clone, Copy, Debug, Hash, Eq, PartialEq)]
 pub enum GameState {
@@ -29,6 +32,8 @@ fn main() {
         primary_window: Some(Window {
             title: "Tile Cat".to_string(),
             fit_canvas_to_parent: true,
+            canvas: Some(String::from("#bevy")),
+            present_mode: PresentMode::AutoVsync,
             prevent_default_event_handling: false,
             ..default()
         }),
@@ -36,10 +41,16 @@ fn main() {
     };
 
     App::new()
+        .insert_resource(AssetMetaCheck::Never)
+        .insert_resource(Msaa::Off)
         .add_plugins((
             DefaultPlugins
                 .set(ImagePlugin::default_nearest())
-                .set(custom_window),
+                .set(custom_window)
+                .set(AssetPlugin {
+                    mode: AssetMode::Unprocessed,
+                    ..default()
+                }),
             GamePlugin,
             MainMenuPlugin,
         ))
