@@ -61,7 +61,10 @@
             wayland
           ];
 
-          packages = [pkgs.rust-analyzer];
+          packages = with pkgs; [
+            rust-analyzer
+            wasm-bindgen-cli
+          ];
 
           # Required for Bevy LD
           LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath buildInputs;
