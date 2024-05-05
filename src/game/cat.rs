@@ -263,11 +263,15 @@ fn jump_cat<T: Copy + Eq + Hash + Send + Sync + 'static>(
     let mut jump_the_cat = false;
 
     if let Some(keypress) = controller.jump {
-        jump_the_cat = jump_the_cat || input.just_pressed(keypress) && cat.can_jump
+        if input.just_pressed(keypress) && cat.can_jump {
+            jump_the_cat = true;
+        }
     };
 
     if let Some(keypress) = controller.up {
-        jump_the_cat = jump_the_cat || input.just_pressed(keypress) && cat.can_jump
+        if input.just_pressed(keypress) && cat.can_jump {
+            jump_the_cat = true;
+        }
     };
 
     if jump_the_cat {
