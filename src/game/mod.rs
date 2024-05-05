@@ -128,14 +128,15 @@ fn stop_simulation(mut next_state: ResMut<NextState<SimulationState>>) {
     next_state.set(SimulationState::InActive)
 }
 
-fn toggle_simulation <T: Copy + Eq + Hash + Send + Sync + 'static>
-(
+fn toggle_simulation<T: Copy + Eq + Hash + Send + Sync + 'static>(
     input: Res<Input<T>>,
     controller: Res<Controlls<T>>,
     current_state: Res<State<SimulationState>>,
     mut next_state: ResMut<NextState<SimulationState>>,
 ) {
-    let Some(keypress) = controller.pause else { return };
+    let Some(keypress) = controller.pause else {
+        return;
+    };
 
     if !input.just_pressed(keypress) {
         return;

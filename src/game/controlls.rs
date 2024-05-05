@@ -52,7 +52,10 @@ impl Controlls<GamepadButton> {
             right: Some(GamepadButton::new(gamepad, GamepadButtonType::DPadRight)),
 
             jump: Some(GamepadButton::new(gamepad, GamepadButtonType::South)),
-            fire: Some(GamepadButton::new(gamepad, GamepadButtonType::RightTrigger2)),
+            fire: Some(GamepadButton::new(
+                gamepad,
+                GamepadButtonType::RightTrigger2,
+            )),
             toggle_weapon: Some(GamepadButton::new(gamepad, GamepadButtonType::North)),
             place_block: Some(GamepadButton::new(gamepad, GamepadButtonType::LeftTrigger)),
             pause: Some(GamepadButton::new(gamepad, GamepadButtonType::Start)),
@@ -63,12 +66,13 @@ impl Controlls<GamepadButton> {
 pub struct ControllsPlugin;
 impl Plugin for ControllsPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .insert_resource(Controlls::<KeyCode>::new())
+        app.insert_resource(Controlls::<KeyCode>::new())
             .insert_resource(Controlls::<GamepadButton>::empty())
             .insert_resource(CurrentGamepad(None))
-            .add_systems(Update, update_gamepad.run_if(resource_changed::<Gamepads>()))
-        ;
+            .add_systems(
+                Update,
+                update_gamepad.run_if(resource_changed::<Gamepads>()),
+            );
     }
 }
 

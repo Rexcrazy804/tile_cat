@@ -64,7 +64,6 @@ impl Plugin for CatPlugin {
                         build_ground_cat::<GamepadButton>,
                         jump_cat::<GamepadButton>,
                     ),
-
                     analogue_movement,
                     physics_on_cat,
                     confine_cat,
@@ -111,8 +110,7 @@ fn despawn_cat(mut commands: Commands, cat_query: Query<Entity, With<Cat>>) {
     commands.entity(entity).despawn();
 }
 
-fn move_cat<T: Copy + Eq + Hash + Send + Sync + 'static>
-(
+fn move_cat<T: Copy + Eq + Hash + Send + Sync + 'static>(
     mut transform_query: Query<&mut Cat>,
     input: Res<Input<T>>,
     controller: Res<Controlls<T>>,
@@ -142,7 +140,9 @@ fn analogue_movement(
     current: Res<CurrentGamepad>,
     axes: Res<Axis<GamepadAxis>>,
 ) {
-    let Ok(mut cat) = transform_query.get_single_mut() else { return; };
+    let Ok(mut cat) = transform_query.get_single_mut() else {
+        return;
+    };
 
     if let Some(id) = current.0 {
         let leftaxis_x = GamepadAxis::new(id, GamepadAxisType::LeftStickX);
@@ -164,10 +164,7 @@ fn analogue_movement(
     }
 }
 
-fn physics_on_cat(
-    mut cat_query: Query<(&mut Transform, &mut Cat), With<Cat>>,
-    time: Res<Time>
-) {
+fn physics_on_cat(mut cat_query: Query<(&mut Transform, &mut Cat), With<Cat>>, time: Res<Time>) {
     let Ok((mut transform, mut cat)) = cat_query.get_single_mut() else {
         return;
     };
@@ -250,8 +247,7 @@ fn get_min_max(window_limit: f32) -> (f32, f32) {
     (min, max)
 }
 
-fn jump_cat<T: Copy + Eq + Hash + Send + Sync + 'static>
-(
+fn jump_cat<T: Copy + Eq + Hash + Send + Sync + 'static>(
     mut cat_query: Query<&mut Cat>,
     input: Res<Input<T>>,
     controller: Res<Controlls<T>>,
@@ -260,7 +256,9 @@ fn jump_cat<T: Copy + Eq + Hash + Send + Sync + 'static>
         return;
     };
 
-    let Some(keypress) = controller.jump else { return };
+    let Some(keypress) = controller.jump else {
+        return;
+    };
 
     if input.just_pressed(keypress) && cat.can_jump {
         cat.velocity.y += CAT_JUMP_FORCE;
@@ -293,7 +291,7 @@ fn animate_cat(mut transform_query: Query<(&mut Transform, &Cat, &mut TextureAtl
     }
 }
 
-fn toggle_cat_gun<T: Copy + Eq + Send + Sync + 'static + Hash> (
+fn toggle_cat_gun<T: Copy + Eq + Send + Sync + 'static + Hash>(
     mut cat_query: Query<&mut Cat>,
     input: Res<Input<T>>,
     controller: Res<Controlls<T>>,
@@ -302,15 +300,16 @@ fn toggle_cat_gun<T: Copy + Eq + Send + Sync + 'static + Hash> (
         return;
     };
 
-    let Some(keypress) = controller.toggle_weapon else { return };
+    let Some(keypress) = controller.toggle_weapon else {
+        return;
+    };
 
     if input.just_pressed(keypress) {
         cat.has_gun = !cat.has_gun
     }
 }
 
-fn fire_bullet_cat<T: Copy + Eq + Send + Sync + 'static + Hash>
-(
+fn fire_bullet_cat<T: Copy + Eq + Send + Sync + 'static + Hash>(
     mut cat_query: Query<&mut Cat>,
     mut anim_time: ResMut<CatBulletFireTimer>,
     mut bullet_fire_writer: EventWriter<BulletFireEvent>,
@@ -331,7 +330,9 @@ fn fire_bullet_cat<T: Copy + Eq + Send + Sync + 'static + Hash>
         cat.is_firing = false;
     }
 
-    let Some(keypress) = controller.fire  else { return };
+    let Some(keypress) = controller.fire else {
+        return;
+    };
 
     if input.just_pressed(keypress) && anim_time.0.finished() {
         let direction_multiplier = match cat.direction {
@@ -345,8 +346,7 @@ fn fire_bullet_cat<T: Copy + Eq + Send + Sync + 'static + Hash>
     }
 }
 
-fn build_ground_cat<T: Copy + Eq + Send + Sync + 'static + Hash>
-(
+fn build_ground_cat<T: Copy + Eq + Send + Sync + 'static + Hash>(
     mut ground_build_writer: EventWriter<GroundBuildEvent>,
     input: Res<Input<T>>,
     controller: Res<Controlls<T>>,
@@ -356,7 +356,9 @@ fn build_ground_cat<T: Copy + Eq + Send + Sync + 'static + Hash>
         return;
     };
 
-    let Some(keypress) = controller.place_block else { return; };
+    let Some(keypress) = controller.place_block else {
+        return;
+    };
 
     if input.just_pressed(keypress) {
         ground_build_writer.send(GroundBuildEvent(transform.translation));
