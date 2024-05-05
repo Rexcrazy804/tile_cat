@@ -6,7 +6,7 @@ mod game;
 mod menu;
 
 use game::GamePlugin;
-use menu::MainMenuPlugin;
+use menu::MenusPlugin;
 
 pub const SCALE_FACTOR: f32 = 4.0;
 
@@ -16,6 +16,7 @@ pub enum GameState {
     MainMenu,
     Game,
     GameOver,
+    Settings,
 }
 
 #[derive(States, Default, Clone, Copy, Debug, Hash, Eq, PartialEq)]
@@ -51,7 +52,7 @@ fn main() {
                     ..default()
                 }),
             GamePlugin,
-            MainMenuPlugin,
+            MenusPlugin,
         ))
         .add_state::<GameState>()
         .add_systems(Startup, spawn_camera)

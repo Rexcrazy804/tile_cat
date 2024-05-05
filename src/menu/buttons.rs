@@ -1,21 +1,26 @@
+use crate::game::controlls::{CatAction, ControllChange};
 use crate::SimulationState;
 use bevy::{app::AppExit, prelude::*};
 
-use super::GameState;
+use super::{GameState, SettingsText};
 
 const DEFUALT_BUTTON_COLOR: Color = Color::rgb(0.15, 0.15, 0.15);
 const HOVER_BUTTON_COLOR: Color = Color::rgb(0.3, 0.3, 0.3);
 const PRESSED_BUTTON_COLOR: Color = Color::rgb(0.1, 0.1, 0.1);
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub enum ButtonType {
     Play,
     Quit,
+    Settings,
     Resume,
     ReturnToMenu,
+    SettingsButton(CatAction),
 }
 
+
 pub fn button_interactions(
+    mut commands: Commands,
     mut next_game_state: ResMut<NextState<GameState>>,
     mut next_sim_state: ResMut<NextState<SimulationState>>,
     mut query: Query<(&Interaction, &ButtonType, &mut BackgroundColor), Changed<Interaction>>,
@@ -28,8 +33,12 @@ pub fn button_interactions(
                 ButtonType::Play => next_game_state.set(GameState::Game),
                 ButtonType::Quit => exit_event_writer.send(AppExit),
                 ButtonType::Resume => next_sim_state.set(SimulationState::Running),
+                ButtonType::Settings => next_game_state.set(GameState::Settings),
                 ButtonType::ReturnToMenu => {
                     next_game_state.set(GameState::MainMenu);
+                }
+                ButtonType::SettingsButton(action) => {
+                    commands.insert_resource(ControllChange(action));
                 }
             };
         }
@@ -46,8 +55,8 @@ fn handle_background(interaction: Interaction, mut background: Mut<'_, Backgroun
 
 pub fn attach_button(parent: &mut ChildBuilder, button_type: ButtonType, button_text: &str) {
     let button_style = Style {
-        width: Val::Percent(10.0),
-        height: Val::Percent(5.0),
+        width: Val::Px(150.0),
+        height: Val::Px(50.0),
         justify_content: JustifyContent::Center,
         align_items: AlignItems::Center,
         ..default()
@@ -59,18 +68,24 @@ pub fn attach_button(parent: &mut ChildBuilder, button_type: ButtonType, button_
         ..default()
     };
 
-    let button = ButtonBundle {
-        style: button_style,
-        background_color: DEFUALT_BUTTON_COLOR.into(),
-        ..default()
-    };
-
-    let text = TextBundle {
-        text: Text::from_section(button_text, text_style),
-        ..default()
-    };
-
-    parent.spawn((button, button_type)).with_children(|parent| {
-        parent.spawn(text);
+    parent.spawn((
+        ButtonBundle {
+            style: button_style,
+            background_color: DEFUALT_BUTTON_COLOR.into(),
+            ..default()
+        },
+        button_type.clone(),
+    )).with_children(|parent| {
+        parent.spawn((
+            TextBundle {
+                text: Text::from_section(button_text, text_style),
+                ..default()
+            },
+            if let ButtonType::SettingsButton(action) = button_type {
+                SettingsText(true, Some(action))
+            } else {
+                SettingsText(false, None)
+            }
+        ));
     });
 }

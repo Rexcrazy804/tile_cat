@@ -12,7 +12,7 @@ mod bugs;
 mod bullet;
 mod cat;
 mod clouds;
-mod controlls;
+pub mod controlls;
 mod flora;
 mod ground;
 

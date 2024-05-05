@@ -1,5 +1,5 @@
 use crate::{
-    game::{reset_stats, DifficultyMultiplier, Heart, Score, INITIAL_HEART_COUNT},
+    game::{controlls::{CatAction, Controlls, ACTION_LIST}, reset_stats, DifficultyMultiplier, Heart, Score, INITIAL_HEART_COUNT},
     GameState, SimulationState,
 };
 use bevy::prelude::*;
@@ -18,6 +18,9 @@ struct PauseMenu;
 struct GameOverMenu;
 
 #[derive(Component)]
+struct SettingsMenu;
+
+#[derive(Component)]
 struct StatsBar;
 
 #[derive(Component)]
@@ -29,20 +32,32 @@ struct HeartText;
 #[derive(Component)]
 struct DifficultyText;
 
-pub struct MainMenuPlugin;
-impl Plugin for MainMenuPlugin {
+#[derive(Component)]
+struct SettingsText(bool, Option<CatAction>);
+
+pub struct MenusPlugin;
+impl Plugin for MenusPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(GameState::MainMenu), (spawn_mainmenu, reset_stats))
+        app
+            .add_systems(OnEnter(GameState::MainMenu), (spawn_mainmenu, reset_stats))
             .add_systems(OnExit(GameState::MainMenu), despawn_mainmenu)
+
             .add_systems(OnEnter(GameState::Game), spawn_statsbar)
             .add_systems(OnExit(GameState::Game), despawn_statsbar)
+
             .add_systems(OnEnter(SimulationState::Paused), spawn_pausemenu)
             .add_systems(OnExit(SimulationState::Paused), despawn_pausemenu)
+
             .add_systems(OnEnter(GameState::GameOver), spawn_gameovermenu)
             .add_systems(OnExit(GameState::GameOver), despawn_gameovermenu)
+
+            .add_systems(OnEnter(GameState::Settings), spawn_settings_menu)
+            .add_systems(OnExit(GameState::Settings), despawn_settings_menu)
+
             .add_systems(
                 Update,
                 (
+                    update_settings_text.run_if(in_state(GameState::Settings)),
                     button_interactions,
                     update_score.run_if(resource_changed::<Score>()),
                     update_heart.run_if(resource_changed::<Heart>()),
@@ -72,17 +87,11 @@ fn spawn_mainmenu(mut commands: Commands) {
 
     commands.spawn((base, MainMenu)).with_children(|parent| {
         attach_button(parent, ButtonType::Play, "Play");
+        attach_button(parent, ButtonType::Settings, "Settings");
         attach_button(parent, ButtonType::Quit, "Quit");
     });
 }
 
-fn despawn_mainmenu(mut commands: Commands, query: Query<Entity, With<MainMenu>>) {
-    let Ok(entity) = query.get_single() else {
-        warn!("No menu Entity");
-        return;
-    };
-    commands.entity(entity).despawn_recursive();
-}
 
 fn spawn_pausemenu(mut commands: Commands) {
     let menu_style = Style {
@@ -246,6 +255,66 @@ fn spawn_gameovermenu(mut commands: Commands, score: Res<Score>) {
         });
 }
 
+fn spawn_settings_menu(
+    mut commands: Commands,
+    kbd_controlls: Res<Controlls<KeyCode>>,
+) {
+    let menu_style = Style {
+        align_items: AlignItems::Center,
+        justify_content: JustifyContent::Center,
+        width: Val::Percent(100.0),
+        height: Val::Percent(100.0),
+        row_gap: Val::Px(10.0),
+        column_gap: Val::Px(10.0),
+        ..default()
+    };
+
+    commands.spawn((
+        NodeBundle {
+            style: menu_style,
+            background_color: Color::rgb(0.988, 0.875, 0.804).into(),
+            ..default()
+        },
+        SettingsMenu
+    )).with_children(|parent| {
+        attach_button(parent, ButtonType::ReturnToMenu, "Return");
+        for action in ACTION_LIST {
+            attach_button(parent, ButtonType::SettingsButton(action), &get_action_text(action, &kbd_controlls));
+        }
+    });
+}
+
+fn get_action_text(
+    action: CatAction,
+    kbd_controlls: &Res<Controlls<KeyCode>>,
+) -> String {
+    let text = match action {
+        CatAction::Up => format!("Up: kbd {:?}", kbd_controlls.up),
+        CatAction::Left => format!("Left: kbd {:?}", kbd_controlls.left),
+        CatAction::Right => format!("Right: kbd {:?}", kbd_controlls.right),
+        CatAction::Jump => format!("Jump: kbd {:?}", kbd_controlls.jump),
+        CatAction::Fire => format!("Fire: kbd {:?}", kbd_controlls.fire),
+        CatAction::ToggleWeapon => format!("ToggleWeapon: kbd {:?}", kbd_controlls.toggle_weapon),
+        CatAction::PlaceBlock => format!("PlaceBlock: kbd {:?}", kbd_controlls.place_block),
+        CatAction::Pause => format!("Pause: kbd {:?}", kbd_controlls.pause),
+    };
+
+    String::from(text)
+}
+
+fn update_settings_text(
+    mut query: Query<(&mut Text, &SettingsText)>,
+    kbd_controlls: Res<Controlls<KeyCode>>,
+) {
+    for (mut text, settings_text) in &mut query {
+        if !settings_text.0 { continue } // if the text does not belong to a setting, ignore it
+
+        let Some(action) = settings_text.1 else { continue };
+
+        text.sections[0].value = get_action_text(action, &kbd_controlls);
+    }
+}
+
 fn update_score(mut query: Query<&mut Text, With<ScoreText>>, score: Res<Score>) {
     let Ok(mut score_text) = query.get_single_mut() else {
         return;
@@ -270,6 +339,11 @@ fn update_difficulty(
     diff_text.sections[1].value = format!("{:.2}x", diff.0);
 }
 
+fn despawn_mainmenu(mut commands: Commands, query: Query<Entity, With<MainMenu>>) {
+    let Ok(entity) = query.get_single() else { return; };
+    commands.entity(entity).despawn_recursive();
+}
+
 fn despawn_pausemenu(mut commands: Commands, query: Query<Entity, With<PauseMenu>>) {
     let Ok(entity) = query.get_single() else {
         return;
@@ -281,6 +355,11 @@ fn despawn_gameovermenu(mut commands: Commands, query: Query<Entity, With<GameOv
     let Ok(entity) = query.get_single() else {
         return;
     };
+    commands.entity(entity).despawn_recursive();
+}
+
+fn despawn_settings_menu(mut commands: Commands, query: Query<Entity, With<SettingsMenu>>) {
+    let Ok(entity) = query.get_single() else { return; };
     commands.entity(entity).despawn_recursive();
 }
 

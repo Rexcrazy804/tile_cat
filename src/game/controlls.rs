@@ -1,7 +1,14 @@
-use bevy::prelude::*;
+use std::hash::Hash;
+
+use bevy::input::gamepad::GamepadButtonInput;
+use bevy::input::keyboard::KeyboardInput;
+use bevy::{log, prelude::*};
 
 #[derive(Resource)]
 pub struct CurrentGamepad(pub Option<Gamepad>);
+
+#[derive(Resource)]
+pub struct ControllChange(pub CatAction);
 
 #[derive(Resource)]
 pub struct Controlls<T> {
@@ -32,6 +39,30 @@ impl<T> Controlls<T> {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub enum CatAction {
+    Up,
+    Left,
+    Right,
+
+    Jump,
+    Fire,
+    ToggleWeapon,
+    PlaceBlock,
+    Pause,
+}
+
+pub const ACTION_LIST: [CatAction; 8] = [
+    CatAction::Up,
+    CatAction::Left,
+    CatAction::Right,
+    CatAction::Jump,
+    CatAction::Fire,
+    CatAction::ToggleWeapon,
+    CatAction::PlaceBlock,
+    CatAction::Pause,
+];
+
 pub struct ControllsPlugin;
 impl Plugin for ControllsPlugin {
     fn build(&self, app: &mut App) {
@@ -42,7 +73,10 @@ impl Plugin for ControllsPlugin {
             .add_systems(Startup, (initialize_mouse_buttons, initialize_kbd_buttons))
             .add_systems(
                 Update,
-                initialize_gamepad.run_if(resource_changed::<Gamepads>()),
+                (
+                    initialize_gamepad.run_if(resource_changed::<Gamepads>()),
+                    handle_controll_change.run_if(resource_exists::<ControllChange>()),
+                )
             );
     }
 }
@@ -84,4 +118,38 @@ fn initialize_kbd_buttons(mut controller: ResMut<Controlls<KeyCode>>) {
     controller.toggle_weapon = Some(KeyCode::F);
     controller.place_block = Some(KeyCode::ShiftLeft);
     controller.pause = Some(KeyCode::Escape);
+}
+
+fn handle_controll_change(
+    mut commands: Commands,
+    mut kbd_events: EventReader<KeyboardInput>,
+    mut gamepad_events: EventReader<GamepadButtonInput>,
+    mut kbd_controller: ResMut<Controlls<KeyCode>>, // will needa change this in the future
+    mut gamepad_controller: ResMut<Controlls<GamepadButton>>, // will needa change this in the future
+    controllchange: Res<ControllChange>,
+) {
+    if let Some(key_event) = kbd_events.read().next() {
+        update_button(&mut kbd_controller, controllchange.0, key_event.key_code);
+        commands.remove_resource::<ControllChange>();
+    } else if let Some(button_event) = gamepad_events.read().next() {
+        update_button(&mut gamepad_controller, controllchange.0, Some(button_event.button));
+        commands.remove_resource::<ControllChange>();
+    }
+}
+
+pub fn update_button<T: Copy + Eq + Hash + Send + Sync + 'static>(
+    controller: &mut ResMut<Controlls<T>>,
+    action: CatAction,
+    button: Option<T>,
+) {
+    match action {
+        CatAction::Up => controller.up = button,
+        CatAction::Left => controller.left = button, 
+        CatAction::Right => controller.right = button, 
+        CatAction::Jump => controller.jump = button, 
+        CatAction::Fire => controller.fire = button, 
+        CatAction::ToggleWeapon => controller.toggle_weapon = button, 
+        CatAction::PlaceBlock => controller.place_block = button, 
+        CatAction::Pause => controller.pause = button, 
+    }
 }
