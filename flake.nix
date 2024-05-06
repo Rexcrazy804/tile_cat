@@ -62,7 +62,7 @@
           ];
 
           packages = with pkgs; [
-            rust-analyzer
+            rust-bin.nightly.latest.rust-analyzer
             trunk
           ];
 
