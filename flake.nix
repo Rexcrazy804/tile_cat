@@ -48,6 +48,7 @@
 
           nativeBuildInputs = with pkgs; [
             (rust-bin.nightly.latest.default.override {
+              extensions = ["rust-src"];
               targets = ["wasm32-unknown-unknown"];
             })
           ];
