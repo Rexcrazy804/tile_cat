@@ -1,3 +1,5 @@
+use std::{fmt::Debug, hash::Hash};
+
 use crate::{
     game::{
         controlls::{CatAction, Controlls, ACTION_LIST},
@@ -283,37 +285,67 @@ fn spawn_settings_menu(mut commands: Commands, kbd_controlls: Res<Controlls<KeyC
         });
 }
 
-fn get_action_text(action: CatAction, kbd_controlls: &Res<Controlls<KeyCode>>) -> String {
+fn get_action_text<T: Debug + Copy + Eq + Hash + Send + Sync + 'static>(
+    action: CatAction,
+    controlls: &Res<Controlls<T>>,
+) -> String {
     match action {
-        CatAction::Up => format!("Up: {:?}", kbd_controlls.up.unwrap_or(KeyCode::Unlabeled)),
-        CatAction::Left => format!(
-            "Left: {:?}",
-            kbd_controlls.left.unwrap_or(KeyCode::Unlabeled)
-        ),
-        CatAction::Right => format!(
-            "Right: {:?}",
-            kbd_controlls.right.unwrap_or(KeyCode::Unlabeled)
-        ),
-        CatAction::Jump => format!(
-            "Jump: {:?}",
-            kbd_controlls.jump.unwrap_or(KeyCode::Unlabeled)
-        ),
-        CatAction::Fire => format!(
-            "Fire: {:?}",
-            kbd_controlls.fire.unwrap_or(KeyCode::Unlabeled)
-        ),
-        CatAction::ToggleWeapon => format!(
-            "ToggleWeapon: {:?}",
-            kbd_controlls.toggle_weapon.unwrap_or(KeyCode::Unlabeled)
-        ),
-        CatAction::PlaceBlock => format!(
-            "PlaceBlock: {:?}",
-            kbd_controlls.place_block.unwrap_or(KeyCode::Unlabeled)
-        ),
-        CatAction::Pause => format!(
-            "Pause: {:?}",
-            kbd_controlls.pause.unwrap_or(KeyCode::Unlabeled)
-        ),
+        CatAction::Up => {
+            if let Some(button) = controlls.up {
+                format!("Up: {:?}", button)
+            } else {
+                "Up: None".to_string()
+            }
+        }
+        CatAction::Left => {
+            if let Some(button) = controlls.left {
+                format!("Left: {:?}", button)
+            } else {
+                "Left: None".to_string()
+            }
+        }
+        CatAction::Right => {
+            if let Some(button) = controlls.right {
+                format!("Right: {:?}", button)
+            } else {
+                "Right: None".to_string()
+            }
+        }
+        CatAction::Jump => {
+            if let Some(button) = controlls.jump {
+                format!("Jump: {:?}", button)
+            } else {
+                "Jump: None".to_string()
+            }
+        }
+        CatAction::Fire => {
+            if let Some(button) = controlls.fire {
+                format!("Fire: {:?}", button)
+            } else {
+                "Fire: None".to_string()
+            }
+        }
+        CatAction::ToggleWeapon => {
+            if let Some(button) = controlls.toggle_weapon {
+                format!("ToggleWeapon: {:?}", button)
+            } else {
+                "ToggleWeapon: None".to_string()
+            }
+        }
+        CatAction::PlaceBlock => {
+            if let Some(button) = controlls.place_block {
+                format!("PlaceBlock: {:?}", button)
+            } else {
+                "PlaceBlock: None".to_string()
+            }
+        }
+        CatAction::Pause => {
+            if let Some(button) = controlls.pause {
+                format!("Pause: {:?}", button)
+            } else {
+                "Pause: None".to_string()
+            }
+        }
     }
 }
 
