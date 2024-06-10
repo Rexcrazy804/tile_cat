@@ -6,12 +6,17 @@ use bevy::{prelude::*, window::PrimaryWindow};
 
 const BULLET_SIZE: f32 = 16.0;
 const BULLET_SPEED: f32 = 400.0;
-const BULLET_Y_OFFSET: f32 = 2.0;
+const BULLET_Y_OFFSET: f32 = 2.5;
+const BULLET_SPARK_DURATION: f32 = 0.02;
+const BULLET_SPARK_X_OFFSET: f32 = 7.5;
 
 #[derive(Component)]
 pub struct Bullet {
     direction_multiplier: f32,
 }
+
+#[derive(Component)]
+pub struct BulletSpark(Timer);
 
 #[derive(Event)]
 pub struct BulletFireEvent(pub f32);
@@ -33,6 +38,7 @@ impl Plugin for BulletPlugin {
                     despawn_bullet
                         .run_if(on_event::<DestroyBulletEvent>())
                         .after(move_bullet),
+                    despawn_spark,
                 )
                     .run_if(in_state(GameState::Game))
                     .run_if(in_state(SimulationState::Running)),
@@ -62,12 +68,40 @@ fn spawn_bullet(
             ..default()
         };
 
+        let mut spark_transform = *cat_transform;
+        spark_transform.translation.x +=
+            direction_multiplier.0 * (CAT_SIZE / 2.0 + BULLET_SPARK_X_OFFSET);
+        spark_transform.translation.y -= BULLET_Y_OFFSET;
+
+        let bullet_spark_sprite_bundle = SpriteBundle {
+            texture: asset_server.load("sprites/bullet/bullet_trail.png"),
+            transform: spark_transform,
+            ..default()
+        };
+
         commands.spawn((
             bullet_sprite_bundle,
             Bullet {
                 direction_multiplier: direction_multiplier.0,
             },
         ));
+
+        commands.spawn((
+            bullet_spark_sprite_bundle,
+            BulletSpark(Timer::from_seconds(BULLET_SPARK_DURATION, TimerMode::Once)),
+        ));
+    }
+}
+
+fn despawn_spark(
+    mut commands: Commands,
+    mut spark_query: Query<(Entity, &mut BulletSpark)>,
+    time: Res<Time>,
+) {
+    for (entity, mut spark) in &mut spark_query {
+        if spark.0.tick(time.delta()).just_finished() {
+            commands.entity(entity).despawn();
+        }
     }
 }
 
