@@ -7,8 +7,7 @@
   };
 
   outputs = {
-    self,
-    nixpkgs,
+    self, nixpkgs,
     rust-overlay,
     treefmt,
     ...
@@ -69,6 +68,8 @@
 
           # Required for Bevy LD
           LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath buildInputs;
+
+          # trunk build --public-url './' --release
         };
     });
   };
