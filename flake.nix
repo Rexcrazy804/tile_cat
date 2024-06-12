@@ -39,10 +39,6 @@
         pkgs.mkShell.override {
           stdenv = pkgs.stdenvAdapters.useMoldLinker pkgs.clangStdenv;
         } rec {
-          shellHook = ''
-            exec $SHELL
-          '';
-
           RUST_BACKTRACE = 1;
 
           nativeBuildInputs = with pkgs; [
