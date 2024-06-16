@@ -112,6 +112,8 @@
         packages.default = tile_cat;
 
         devShells.default = craneLib.devShell {
+          inherit LD_LIBRARY_PATH;
+
           inputsFrom = [ tile_cat ];
           packages = [
             # trunk build --public-url './' --release
