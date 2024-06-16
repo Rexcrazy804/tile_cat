@@ -18,8 +18,8 @@
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
 
-    fenix = {
-      url = "github:nix-community/fenix";
+    crane = {
+      url = "github:ipetkov/crane";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -49,6 +49,8 @@
           targets = ["wasm32-unknown-unknown" "x86_64-unknown-linux-gnu"];
         };
 
+        craneLib = (inputs.crane.mkLib pkgs).overrideToolchain rustToolchain;
+
         nativeBuildInputs = with pkgs; [ pkg-config makeWrapper ];
 
         buildInputs = [
@@ -71,22 +73,12 @@
         # Required for Bevy LD
         LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath buildInputs;
 
-
-        minigrep = (pkgs.makeRustPlatform {
-          inherit (inputs.fenix.packages.${system}.minimal) cargo rustc;
-        }).buildRustPackage {
-          pname = "tile_cat";
-          version = "0.4.0";
-
+        tile_cat = craneLib.buildPackage {
           src = ./.;
+          strictDeps = true;
           doCheck = false;
 
           inherit nativeBuildInputs buildInputs;
-
-          cargoLock = {
-            lockFile = ./Cargo.lock;
-          };
-
 
           env = {
             ZSTD_SYS_USE_PKG_CONFIG = true;
@@ -115,7 +107,7 @@
           };
         };
 
-        packages.default = minigrep;
+        packages.default = tile_cat;
 
         devShells.default =
           pkgs.mkShell.override {
