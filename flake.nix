@@ -109,22 +109,13 @@
 
         packages.default = tile_cat;
 
-        devShells.default =
-          pkgs.mkShell.override {
-            stdenv = pkgs.stdenvAdapters.useMoldLinker pkgs.clangStdenv;
-          } {
-            inherit nativeBuildInputs buildInputs LD_LIBRARY_PATH;
-            RUST_BACKTRACE = 1;
-
-
-            packages = with pkgs; [
-              rustToolchain
-              rust-bin.nightly.latest.rust-analyzer
-
-              # trunk build --public-url './' --release
-              trunk
-            ];
-          };
+        devShells.default = craneLib.devShell {
+          inputsFrom = [ tile_cat ];
+          packages = [
+            # trunk build --public-url './' --release
+            pkgs.trunk
+          ];
+        };
       };
     };
 }
