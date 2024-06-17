@@ -29,7 +29,7 @@ impl Plugin for BulletPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<BulletFireEvent>()
             .add_event::<DestroyBulletEvent>()
-            .add_systems(OnExit(GameState::Game), despawn_all_bullets)
+            .add_systems(OnExit(GameState::Game), despawn_all_bullets_and_sparks)
             .add_systems(
                 Update,
                 (
@@ -134,8 +134,15 @@ fn despawn_bullet(mut commands: Commands, mut destruction_reader: EventReader<De
     }
 }
 
-fn despawn_all_bullets(mut commands: Commands, query: Query<Entity, With<Bullet>>) {
-    for entity in &query {
+fn despawn_all_bullets_and_sparks(
+    mut commands: Commands,
+    bullet_query: Query<Entity, With<Bullet>>,
+    spark_query: Query<Entity, With<BulletSpark>>,
+) {
+    for entity in &bullet_query {
+        commands.entity(entity).despawn();
+    }
+    for entity in &spark_query {
         commands.entity(entity).despawn();
     }
 }
