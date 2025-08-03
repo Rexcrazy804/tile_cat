@@ -17,4 +17,19 @@ in
       craneLib = (callPackage ((sources.crane {inherit pkgs;}) + "/lib") {}).overrideToolchain rustToolchain;
       tile-cat = callPackage ./package.nix {};
     });
+
+    devShells.default = let
+      inherit (self.packages) craneLib tile-cat;
+      devShell = craneLib.devShell.override (old: {
+        mkShell = old.mkShell.override (old': {
+          stdenv = pkgs.stdenvAdapters.useMoldLinker old'.stdenv;
+        });
+      });
+    in
+      devShell {
+        inputsFrom = [tile-cat];
+        # trunk build --public-url './' --release
+        # pkgs.trunk
+        packages = [];
+      };
   })
