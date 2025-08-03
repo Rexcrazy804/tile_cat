@@ -56,7 +56,6 @@ in
 
       postInstall =
         ''
-          mkdir -p $out/bin
           wrapProgram $out/bin/tile_cat \
             --prefix LD_LIBRARY_PATH : ${makeLibraryPath commonArgs.buildInputs}
         ''
@@ -68,7 +67,9 @@ in
         );
 
       postFixup = ''
-        cp -r ${./assets} $out/bin/assets/
+        mkdir -p $out/share
+        cp -r ${./assets} $out/share/assets/
+        ln -sf $out/share/assets $out/bin/assets
       '';
     }
   )
